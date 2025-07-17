@@ -1,9 +1,7 @@
-// src/components/ui/CollapsibleSection.tsx
 "use client";
 
 import { useEffect, useRef } from "react";
-
-declare const anime: { (params: Record<string, unknown>): void };
+import anime from "animejs";
 
 interface CollapsibleSectionProps {
   isOpen: boolean;
@@ -17,33 +15,35 @@ export default function CollapsibleSection({
   const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const runAnimation = () => {
-      if (contentRef.current) {
-        anime({
-          targets: contentRef.current,
-          height: isOpen ? contentRef.current.scrollHeight : 0,
-          opacity: isOpen ? [0, 1] : [1, 0],
-          paddingTop: isOpen ? ["0rem", "1rem"] : ["1rem", "0rem"],
-          paddingBottom: isOpen ? ["0rem", "1rem"] : ["1rem", "0rem"],
-          duration: 400,
-          easing: "easeOutSine",
-        });
-      }
-    };
+    if (!contentRef.current) return;
 
-    if (typeof anime !== "undefined") {
-      runAnimation();
-    } else {
-      window.addEventListener("animeLoaded", runAnimation);
-    }
-
-    return () => {
-      window.removeEventListener("animeLoaded", runAnimation);
-    };
+    anime({
+      targets: contentRef.current,
+      height: isOpen ? contentRef.current.scrollHeight : 0,
+      opacity: isOpen ? [0, 1] : [1, 0],
+      paddingTop: isOpen ? ["0rem", "1rem"] : ["1rem", "0rem"],
+      paddingBottom: isOpen ? ["0rem", "1rem"] : ["1rem", "0rem"],
+      duration: 400,
+      easing: "easeOutSine",
+      complete: () => {
+        if (isOpen && contentRef.current) {
+          contentRef.current.style.height = "auto";
+        }
+      },
+    });
   }, [isOpen]);
 
   return (
-    <div ref={contentRef} style={{ overflow: "hidden", height: 0 }}>
+    <div
+      ref={contentRef}
+      style={{
+        overflow: "hidden",
+        height: 0,
+        opacity: 0,
+        paddingTop: 0,
+        paddingBottom: 0,
+      }}
+    >
       {children}
     </div>
   );

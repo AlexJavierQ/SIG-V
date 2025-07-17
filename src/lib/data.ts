@@ -103,6 +103,27 @@ export async function getOperationalData(
         assignedTrips: 0,
         cancellationRate: 5,
       },
+      {
+        id: 88,
+        name: "Jean A.",
+        city: "Loja",
+        assignedTrips: 0,
+        cancellationRate: 5,
+      },
+      {
+        id: 88,
+        name: "Guillermo G.",
+        city: "Loja",
+        assignedTrips: 100,
+        cancellationRate: 60,
+      },
+      {
+        id: 88,
+        name: "Mario V.",
+        city: "Loja",
+        assignedTrips: 30,
+        cancellationRate: 12,
+      },
     ],
     viajesPorConductorData: [
       { name: "Carlos R.", viajes: 45 },

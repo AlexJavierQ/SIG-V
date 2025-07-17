@@ -1,80 +1,166 @@
 "use client";
 
 import { useEffect } from "react";
+import anime from "animejs/lib/anime.es.js";
 import { useRouter } from "next/navigation";
-import { animate, svg, stagger } from "animejs"; // Solo funciona si tu build expone estos exports
 
-export default function LandingPage() {
+export default function LogoLandingPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const drawable = svg.createDrawable(".line");
+    const circle = document.querySelector<SVGCircleElement>(".neon-circle");
+    if (!circle) return;
 
-    animate(drawable, {
-      draw: ["0 0", "0 1", "1 1"],
-      ease: "inOutQuad",
-      duration: 4000,
-      delay: stagger(200),
-      loop: false,
-      onComplete: () => {
+    const length = circle.getTotalLength();
+
+    // Setup inicial: círculo no visible
+    circle.style.strokeDasharray = length.toString();
+    circle.style.strokeDashoffset = length.toString();
+
+    const timeline = anime.timeline({
+      easing: "easeInOutSine",
+      complete: () => {
         router.push("/taxis/operacional");
       },
     });
+
+    // 1. Dibuja el círculo (strokeDashoffset baja de length a 0)
+    timeline.add(
+      {
+        targets: circle,
+        strokeDashoffset: [length, 0],
+        duration: 2000,
+      },
+      0
+    ); // comienza en 0
+
+    // 2. Anima las letras simultáneamente (mismo tiempo que el dibujo)
+    timeline.add(
+      {
+        targets: ".logo-letter",
+        scale: [0.8, 1],
+        opacity: [0, 1],
+        delay: anime.stagger(300, { start: 0 }),
+        duration: 1500,
+        easing: "easeOutBack",
+      },
+      0
+    ); // empieza en 0
+
+    // 3. Rota el círculo suavemente adelante y atrás, justo después de dibujarlo
+    timeline.add(
+      {
+        targets: circle,
+        strokeDashoffset: [0, length / 4],
+        duration: 1000,
+        direction: "alternate",
+        loop: 2,
+      },
+      2000
+    ); // empieza justo después de los 2000ms del dibujo
   }, [router]);
 
   return (
-    <main className="flex items-center justify-center h-screen bg-slate-900 overflow-hidden">
-      <svg viewBox="0 0 304 112">
-        <g
-          stroke="currentColor"
-          fill="none"
-          fill-rule="evenodd"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
+    <>
+      <main className="flex flex-col items-center justify-center h-screen bg-gradient-to-br from-purple-900 via-indigo-800 to-blue-700 gap-6">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 250 250"
+          className="w-[350px] h-[350px]"
         >
-          <path
-            className="line"
-            d="M59 90V56.136C58.66 46.48 51.225 39 42 39c-9.389 0-17 7.611-17 17s7.611 17 17 17h8.5v17H42C23.222 90 8 74.778 8 56s15.222-34 34-34c18.61 0 33.433 14.994 34 33.875V90H59z"
+          <defs>
+            <filter id="neonGlow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur
+                in="SourceGraphic"
+                stdDeviation="4"
+                result="blur1"
+              />
+              <feGaussianBlur
+                in="SourceGraphic"
+                stdDeviation="10"
+                result="blur2"
+              />
+              <feMerge>
+                <feMergeNode in="blur1" />
+                <feMergeNode in="blur2" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+
+          <text
+            x="50%"
+            y="50%"
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fill="#ffffff"
+            fontSize="48"
+            fontFamily="sans-serif"
+            filter="url(#neonGlow)"
+          >
+            <tspan className="logo-letter" x="50%" dy="0">
+              C
+            </tspan>
+            <tspan className="logo-letter" dy="0">
+              L
+            </tspan>
+            <tspan className="logo-letter" dy="0">
+              I
+            </tspan>
+            <tspan className="logo-letter" dy="0">
+              P
+            </tspan>
+            <tspan className="logo-letter" dy="0">
+              P
+            </tspan>
+          </text>
+
+          <circle
+            className="neon-circle"
+            cx="125"
+            cy="125"
+            r="90"
+            fill="transparent"
+            stroke="#ffffff"
+            strokeWidth="8"
+            filter="url(#neonGlow)"
           />
-          <polyline
-            className="line"
-            points="59 22.035 59 90 76 90 76 22 59 22"
-          />
-          <path
-            className="line"
-            d="M59 90V55.74C59.567 36.993 74.39 22 93 22c18.778 0 34 15.222 34 34v34h-17V56c0-9.389-7.611-17-17-17-9.225 0-16.66 7.48-17 17.136V90H59z"
-          />
-          <polyline
-            className="line"
-            points="127 22.055 127 90 144 90 144 22 127 22"
-          />
-          <path
-            className="line"
-            d="M127 90V55.74C127.567 36.993 142.39 22 161 22c18.778 0 34 15.222 34 34v34h-17V56c0-9.389-7.611-17-17-17-9.225 0-16.66 7.48-17 17.136V90h-17z"
-          />
-          <path
-            className="line"
-            d="M118.5 22a8.5 8.5 0 1 1-8.477 9.067v-1.134c.283-4.42 3.966-7.933 8.477-7.933z"
-          />
-          <path
-            className="line"
-            d="M144 73c-9.389 0-17-7.611-17-17v-8.5h-17V56c0 18.778 15.222 34 34 34V73z"
-          />
-          <path
-            className="line"
-            d="M178 90V55.74C178.567 36.993 193.39 22 212 22c18.778 0 34 15.222 34 34v34h-17V56c0-9.389-7.611-17-17-17-9.225 0-16.66 7.48-17 17.136V90h-17z"
-          />
-          <path
-            className="line"
-            d="M263 73c-9.389 0-17-7.611-17-17s7.611-17 17-17c9.18 0 16.58 7.4 17 17h-17v17h34V55.875C296.433 36.994 281.61 22 263 22c-18.778 0-34 15.222-34 34s15.222 34 34 34V73z"
-          />
-          <path
-            className="line"
-            d="M288.477 73A8.5 8.5 0 1 1 280 82.067v-1.134c.295-4.42 3.967-7.933 8.477-7.933z"
-          />
-        </g>
-      </svg>
-    </main>
+        </svg>
+
+        <p className="text-white text-lg font-semibold tracking-wide select-none neon-text">
+          Viewed using SIG-V
+        </p>
+      </main>
+
+      <style>{`
+        .neon-text {
+          text-shadow:
+            0 0 5px #ffffff,
+            0 0 10px #ffffff,
+            0 0 20px #ffffff,
+            0 0 40px #ffffff;
+          animation: neonPulse 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes neonPulse {
+          0% {
+            text-shadow:
+              0 0 5px #ffffff,
+              0 0 10px #ffffff,
+              0 0 20px #ffffff,
+              0 0 40px #ffffff;
+            color: #ffffff;
+          }
+          100% {
+            text-shadow:
+              0 0 10px #ffffff,
+              0 0 20px #ffffff,
+              0 0 30px #ffffff,
+              0 0 60px #ffffff;
+            color: #ffffff;
+          }
+        }
+      `}</style>
+    </>
   );
 }
