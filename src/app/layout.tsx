@@ -4,7 +4,7 @@ import { ThemeProvider } from "@/contexts/ThemeProvider";
 import Sidebar from "@/components/ui/Sidebar";
 // --- 1. Importa el nuevo componente ---
 import ScriptLoader from "@/components/common/ScriptLoader";
-
+import { SpeedInsights } from "@vercel/speed-insights/next";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {

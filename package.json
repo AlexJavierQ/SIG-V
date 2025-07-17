@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@vercel/speed-insights": "^1.2.0",
     "amqplib": "^0.10.8",
     "animejs": "^3.2.1",
     "lucide-react": "^0.525.0",
