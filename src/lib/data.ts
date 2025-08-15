@@ -2,14 +2,11 @@
 
 import type {
   OperationalData,
-  FinancialData,
-  MarketingData,
-  SalesData,
   FilterOptions,
-  Metric,
   FinancialDashboardData,
   MarketingDashboardData,
   SalesUsageData,
+  ExecutiveDashboardData,
 } from "./types";
 
 export async function getOperationalData(
@@ -163,7 +160,7 @@ export async function getOperationalData(
 }
 
 export async function getFinancialData(
-  filters?: FilterOptions
+  _filters?: FilterOptions
 ): Promise<FinancialDashboardData> {
   // Datos basados en la imagen de KPIs financieros
   return {
@@ -347,7 +344,7 @@ export async function getFinancialData(
 }
 
 export async function getMarketingData(
-  filters?: FilterOptions
+  _filters?: FilterOptions
 ): Promise<MarketingDashboardData> {
   return {
     kpis: {
@@ -448,7 +445,7 @@ export async function getMarketingData(
   };
 }
 export async function getSalesData(
-  filters?: FilterOptions
+  _filters?: FilterOptions
 ): Promise<SalesUsageData> {
   // Datos basados en la imagen de KPIs de Ventas y Uso
   return {
@@ -496,5 +493,217 @@ export async function getSalesData(
       { name: "Parque La Carolina", viajes: 1200 },
       { name: "González Suárez", viajes: 950 },
     ],
+  };
+}
+export async function getExecutiveData(
+  _filters?: FilterOptions
+): Promise<ExecutiveDashboardData> {
+  return {
+    kpis: {
+      ingresosTotales: {
+        title: "Ingresos Totales",
+        value: 2850000,
+        description: "Ingresos consolidados del período",
+        trend: {
+          direction: "up",
+          value: "12.5%",
+        },
+      },
+      usuariosActivos: {
+        title: "Usuarios Activos",
+        value: 45200,
+        description: "Usuarios con actividad en el período",
+        trend: {
+          direction: "up",
+          value: "8.3%",
+        },
+      },
+      roi: {
+        title: "ROI",
+        value: 24.8,
+        description: "Retorno sobre la inversión",
+        trend: {
+          direction: "up",
+          value: "3.2%",
+        },
+      },
+      eficienciaOperativa: {
+        title: "Eficiencia Operativa",
+        value: 87.5,
+        description: "Índice de eficiencia general",
+        trend: {
+          direction: "up",
+          value: "2.1%",
+        },
+      },
+    },
+    businessMetrics: [
+      {
+        name: "Crecimiento de Ingresos",
+        value: 12.5,
+        target: 15.0,
+        achievement: 83.3,
+        category: "revenue",
+      },
+      {
+        name: "Adquisición de Usuarios",
+        value: 8.3,
+        target: 10.0,
+        achievement: 83.0,
+        category: "growth",
+      },
+      {
+        name: "Eficiencia Operativa",
+        value: 87.5,
+        target: 85.0,
+        achievement: 102.9,
+        category: "efficiency",
+      },
+      {
+        name: "Satisfacción del Cliente",
+        value: 4.2,
+        target: 4.0,
+        achievement: 105.0,
+        category: "satisfaction",
+      },
+      {
+        name: "Retención de Usuarios",
+        value: 78.5,
+        target: 80.0,
+        achievement: 98.1,
+        category: "growth",
+      },
+      {
+        name: "Margen de Contribución",
+        value: 32.1,
+        target: 30.0,
+        achievement: 107.0,
+        category: "revenue",
+      },
+    ],
+    profitabilityAnalysis: [
+      {
+        period: "Ene 2025",
+        revenue: 2200000,
+        costs: 1650000,
+        profit: 550000,
+        margin: 25.0,
+      },
+      {
+        period: "Feb 2025",
+        revenue: 2350000,
+        costs: 1720000,
+        profit: 630000,
+        margin: 26.8,
+      },
+      {
+        period: "Mar 2025",
+        revenue: 2500000,
+        costs: 1800000,
+        profit: 700000,
+        margin: 28.0,
+      },
+      {
+        period: "Abr 2025",
+        revenue: 2650000,
+        costs: 1880000,
+        profit: 770000,
+        margin: 29.1,
+      },
+      {
+        period: "May 2025",
+        revenue: 2750000,
+        costs: 1950000,
+        profit: 800000,
+        margin: 29.1,
+      },
+      {
+        period: "Jun 2025",
+        revenue: 2850000,
+        costs: 2020000,
+        profit: 830000,
+        margin: 29.1,
+      },
+    ],
+    strategicTrends: [
+      {
+        date: "Ene 2025",
+        revenue: 2200000,
+        users: 38500,
+        efficiency: 82.1,
+        satisfaction: 3.9,
+      },
+      {
+        date: "Feb 2025",
+        revenue: 2350000,
+        users: 40200,
+        efficiency: 84.3,
+        satisfaction: 4.0,
+      },
+      {
+        date: "Mar 2025",
+        revenue: 2500000,
+        users: 41800,
+        efficiency: 85.7,
+        satisfaction: 4.1,
+      },
+      {
+        date: "Abr 2025",
+        revenue: 2650000,
+        users: 43100,
+        efficiency: 86.2,
+        satisfaction: 4.1,
+      },
+      {
+        date: "May 2025",
+        revenue: 2750000,
+        users: 44300,
+        efficiency: 86.8,
+        satisfaction: 4.2,
+      },
+      {
+        date: "Jun 2025",
+        revenue: 2850000,
+        users: 45200,
+        efficiency: 87.5,
+        satisfaction: 4.2,
+      },
+    ],
+    regionalPerformance: [
+      {
+        region: "Quito",
+        revenue: 1140000,
+        users: 18080,
+        growth: 15.2,
+        marketShare: 42.3,
+      },
+      {
+        region: "Guayaquil",
+        revenue: 969000,
+        users: 15364,
+        growth: 12.8,
+        marketShare: 38.1,
+      },
+      {
+        region: "Cuenca",
+        revenue: 427500,
+        users: 6780,
+        growth: 8.9,
+        marketShare: 28.7,
+      },
+      {
+        region: "Otras Ciudades",
+        revenue: 313500,
+        users: 4976,
+        growth: 6.2,
+        marketShare: 22.1,
+      },
+    ],
+    satisfactionMetrics: {
+      customerSatisfaction: 4.2,
+      nps: 68,
+      serviceQuality: 89,
+      responseTime: 3.2,
+    },
   };
 }

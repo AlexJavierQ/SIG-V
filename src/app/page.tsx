@@ -1,166 +1,61 @@
 "use client";
 
-import { useEffect } from "react";
-import anime from "animejs/lib/anime.es.js";
-import { useRouter } from "next/navigation";
+import { useEffect, useRef } from "react";
+import DashboardLayout from "@/components/ui/DashboardLayout";
+import CompactFilters from "@/components/ui/CompactFilters";
+import { ToastContainer, useToast } from "@/components/ui/Toast";
+import WelcomeSection from "@/components/dashboard/WelcomeSection";
+import OverviewSection from "@/components/dashboard/OverviewSection";
+import ServicesSection from "@/components/dashboard/ServicesSection";
+import { useDashboardData } from "@/hooks/useDashboardData";
 
-export default function LogoLandingPage() {
-  const router = useRouter();
+export default function HomePage() {
+  const { toasts, success, error: showError, removeToast } = useToast();
 
+  // El hook ahora devuelve todos los datos necesarios para el dashboard principal
+  const { overviewKPIs, serviceStats, isLoading, error } = useDashboardData();
+
+  const prevIsLoadingRef = useRef(true);
+
+  // Efecto para mostrar notificaciones en cada carga de datos
   useEffect(() => {
-    const circle = document.querySelector<SVGCircleElement>(".neon-circle");
-    if (!circle) return;
-
-    const length = circle.getTotalLength();
-
-    // Setup inicial: círculo no visible
-    circle.style.strokeDasharray = length.toString();
-    circle.style.strokeDashoffset = length.toString();
-
-    const timeline = anime.timeline({
-      easing: "easeInOutSine",
-      complete: () => {
-        router.push("/taxis/operacional");
-      },
-    });
-
-    // 1. Dibuja el círculo (strokeDashoffset baja de length a 0)
-    timeline.add(
-      {
-        targets: circle,
-        strokeDashoffset: [length, 0],
-        duration: 2000,
-      },
-      0
-    ); // comienza en 0
-
-    // 2. Anima las letras simultáneamente (mismo tiempo que el dibujo)
-    timeline.add(
-      {
-        targets: ".logo-letter",
-        scale: [0.8, 1],
-        opacity: [0, 1],
-        delay: anime.stagger(300, { start: 0 }),
-        duration: 1500,
-        easing: "easeOutBack",
-      },
-      0
-    ); // empieza en 0
-
-    // 3. Rota el círculo suavemente adelante y atrás, justo después de dibujarlo
-    timeline.add(
-      {
-        targets: circle,
-        strokeDashoffset: [0, length / 4],
-        duration: 1000,
-        direction: "alternate",
-        loop: 2,
-      },
-      2000
-    ); // empieza justo después de los 2000ms del dibujo
-  }, [router]);
+    if (prevIsLoadingRef.current && !isLoading) {
+      if (error) {
+        showError('Error de Conexión', error);
+      } else {
+        success('Datos Actualizados', 'El dashboard ha sido sincronizado con éxito.');
+      }
+    }
+    prevIsLoadingRef.current = isLoading;
+  }, [isLoading, error, success, showError]);
 
   return (
-    <>
-      <main className="flex flex-col items-center justify-center h-screen bg-gradient-to-br from-purple-900 via-indigo-800 to-blue-700 gap-6">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 250 250"
-          className="w-[350px] h-[350px]"
-        >
-          <defs>
-            <filter id="neonGlow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur
-                in="SourceGraphic"
-                stdDeviation="4"
-                result="blur1"
-              />
-              <feGaussianBlur
-                in="SourceGraphic"
-                stdDeviation="10"
-                result="blur2"
-              />
-              <feMerge>
-                <feMergeNode in="blur1" />
-                <feMergeNode in="blur2" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-          </defs>
+    <DashboardLayout
+      title="Dashboard Principal"
+      subtitle="Vista general del sistema de analytics"
+    >
+      <div className="space-y-8">
+        <WelcomeSection
+          serviciosActivos={overviewKPIs.find(kpi => kpi.title === "Servicios Operativos")?.value || 2}
+          isLoading={isLoading}
+        />
 
-          <text
-            x="50%"
-            y="50%"
-            textAnchor="middle"
-            dominantBaseline="middle"
-            fill="#ffffff"
-            fontSize="48"
-            fontFamily="sans-serif"
-            filter="url(#neonGlow)"
-          >
-            <tspan className="logo-letter" x="50%" dy="0">
-              C
-            </tspan>
-            <tspan className="logo-letter" dy="0">
-              L
-            </tspan>
-            <tspan className="logo-letter" dy="0">
-              I
-            </tspan>
-            <tspan className="logo-letter" dy="0">
-              P
-            </tspan>
-            <tspan className="logo-letter" dy="0">
-              P
-            </tspan>
-          </text>
+        {/* El nuevo sistema de filtros robusto */}
+        <CompactFilters />
 
-          <circle
-            className="neon-circle"
-            cx="125"
-            cy="125"
-            r="90"
-            fill="transparent"
-            stroke="#ffffff"
-            strokeWidth="8"
-            filter="url(#neonGlow)"
-          />
-        </svg>
+        {/* La sección de KPIs generales sigue funcionando */}
+        <OverviewSection kpis={overviewKPIs} isLoading={isLoading} />
 
-        <p className="text-white text-lg font-semibold tracking-wide select-none neon-text">
-          Viewed using SIG-V
-        </p>
-      </main>
+        {/* La sección de servicios ahora recibe los datos dinámicos */}
+        <ServicesSection
+          isLoading={isLoading}
+          serviceStats={serviceStats}
+        />
+      </div>
 
-      <style>{`
-        .neon-text {
-          text-shadow:
-            0 0 5px #ffffff,
-            0 0 10px #ffffff,
-            0 0 20px #ffffff,
-            0 0 40px #ffffff;
-          animation: neonPulse 2s ease-in-out infinite alternate;
-        }
+      <ToastContainer toasts={toasts} onClose={removeToast} />
 
-        @keyframes neonPulse {
-          0% {
-            text-shadow:
-              0 0 5px #ffffff,
-              0 0 10px #ffffff,
-              0 0 20px #ffffff,
-              0 0 40px #ffffff;
-            color: #ffffff;
-          }
-          100% {
-            text-shadow:
-              0 0 10px #ffffff,
-              0 0 20px #ffffff,
-              0 0 30px #ffffff,
-              0 0 60px #ffffff;
-            color: #ffffff;
-          }
-        }
-      `}</style>
-    </>
+      {/* Se ha eliminado el componente FloatingSystemStatus */}
+    </DashboardLayout>
   );
 }

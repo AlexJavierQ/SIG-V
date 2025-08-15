@@ -1,0 +1,54 @@
+# Page snapshot
+
+```yaml
+- link "Saltar al contenido principal":
+  - /url: "#main-content"
+- button "Toggle sidebar"
+- complementary:
+  - link "SIG-V Analytics Dashboard":
+    - /url: /
+    - text: SIG-V
+    - paragraph: Analytics Dashboard
+  - navigation:
+    - button "🚕Taxis"
+    - link "Operacional":
+      - /url: /taxis/operacional
+    - link "Financiero":
+      - /url: /taxis/financiero
+    - link "Marketing":
+      - /url: /taxis/marketing
+    - link "Ventas y Uso":
+      - /url: /taxis/ventas
+    - button "🚌Buses"
+    - button "📦Delivery"
+  - paragraph: Admin
+  - paragraph: Dashboard
+  - button "Toggle theme"
+  - button
+- main:
+  - button
+  - heading "Centro de Control - Taxis" [level=1]
+  - paragraph: Monitoreo y gestión del servicio de taxis en tiempo real
+  - button "Filtros"
+  - button
+  - button
+  - text: "Filtros activos: Temporalidad: 1 mes"
+  - button
+  - paragraph: Conductores Activos
+  - paragraph: 3,247
+  - text: +12.5%
+  - paragraph: Viajes Completados
+  - paragraph: 89,420
+  - text: +8.3%
+  - paragraph: Tiempo Promedio
+  - paragraph: 4.2 min
+  - text: "-15%"
+  - paragraph: Zonas Activas
+  - paragraph: "24"
+  - text: 3 congestión
+  - heading "Dashboards Especializados" [level=2]
+  - button "Dashboard Operacional Conductores y eficiencia"
+  - button "Dashboard Financiero Ingresos y rentabilidad"
+  - button "Dashboard Marketing Usuarios y retención"
+  - button "Dashboard Ventas Demanda y zonas"
+```

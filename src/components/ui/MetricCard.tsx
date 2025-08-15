@@ -1,77 +1,95 @@
 "use client";
 
-import React from "react";
-import { useAnimeCounter } from "@/hooks/useAnimeCounter";
-import { ArrowUp, ArrowDown } from "lucide-react";
-import type { ComplexMetric } from "@/lib/types";
+import React from 'react';
+import { TrendingUp, TrendingDown } from 'lucide-react';
+
+interface MetricCardProps {
+  title: string;
+  subtitle?: string;
+  value: number;
+  trend?: number;
+  format: 'currency' | 'number' | 'percentage' | 'rating' | 'time' | 'fraction';
+  className?: string;
+  onClick?: () => void;
+  metadata?: { total?: number };
+}
 
 export default function MetricCard({
   title,
+  subtitle,
   value,
-  description,
-  icon,
-  iconColor = "text-slate-400 dark:text-slate-500",
   trend,
-  subValue,
-  chip,
-}: ComplexMetric) {
-  const numericValue =
-    typeof value === "string" ? parseFloat(value.replace(/,/g, "")) : value;
-  const valueRef = useAnimeCounter<HTMLSpanElement>({ value: numericValue });
+  format,
+  className = "",
+  onClick,
+  metadata
+}: MetricCardProps) {
+  const formatValue = (val: number, fmt: string) => {
+    switch (fmt) {
+      case 'currency':
+        return new Intl.NumberFormat('es-EC', {
+          style: 'currency',
+          currency: 'USD',
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0
+        }).format(val);
+      case 'percentage':
+        return `${val.toFixed(1)}%`;
+      case 'rating':
+        return `${val.toFixed(1)}/5`;
+      case 'time':
+        return val < 60 ? `${val.toFixed(1)} min` : `${(val / 60).toFixed(1)} hrs`;
+      case 'fraction':
+        return `${val}/${metadata?.total || 5}`;
+      case 'number':
+      default:
+        return val.toLocaleString('es-EC');
+    }
+  };
+
+  const getTrendColor = (trendValue?: number) => {
+    if (!trendValue) return 'text-slate-500 dark:text-slate-400';
+    return trendValue > 0 ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400';
+  };
+
+  const getTrendIcon = (trendValue?: number) => {
+    if (!trendValue) return null;
+    return trendValue > 0 ?
+      <TrendingUp className="w-4 h-4" /> :
+      <TrendingDown className="w-4 h-4" />;
+  };
 
   return (
-    <div className="flex flex-col h-full p-5 transition-colors duration-300 bg-white border rounded-lg shadow-sm border-slate-200 dark:bg-slate-800/80 dark:border-slate-700">
-      {/* Cabecera */}
-      <div className="flex items-start justify-between">
-        <div className="flex flex-col">
-          <div className="flex items-center gap-2">
-            <h3 className="font-semibold text-slate-600 dark:text-slate-300">
+    <div
+      className={`unified-card hover-unified group relative ${onClick ? 'cursor-pointer' : ''} ${className}`}
+      onClick={onClick}
+    >
+      {/* Subtle gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl pointer-events-none" />
+
+      <div className="relative z-10">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex-1">
+            <h3 className="text-sm font-medium text-secondary-unified group-hover:text-primary-unified transition-colors duration-300">
               {title}
             </h3>
-            {chip && (
-              <span className="text-xs font-semibold px-2 py-0.5 bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300 rounded-full">
-                {chip}
-              </span>
+            {subtitle && (
+              <p className="text-xs text-tertiary-unified mt-1 leading-tight">
+                {subtitle}
+              </p>
             )}
           </div>
-          <p className="text-xs text-slate-400 dark:text-slate-500">
-            {description}
-          </p>
-        </div>
-        {icon && <span className={`text-3xl ${iconColor}`}>{icon}</span>}
-      </div>
-
-      {/* Cuerpo principal */}
-      <div className="mt-4 mb-1">
-        <span
-          className="text-4xl font-bold text-slate-900 dark:text-slate-100"
-          ref={valueRef}
-        >
-          {numericValue.toLocaleString("en-US", { maximumFractionDigits: 2 })}
-        </span>
-        {/* Mostramos el sub-valor directamente */}
-        {subValue && (
-          <span className="ml-2 text-sm text-slate-500 dark:text-slate-400">
-            {subValue}
-          </span>
-        )}
-      </div>
-
-      {/* Indicador de Tendencia */}
-      {trend && (
-        <div
-          className={`flex items-center text-sm font-semibold ${
-            trend.direction === "down" ? "text-red-500" : "text-green-500"
-          }`}
-        >
-          {trend.direction === "down" ? (
-            <ArrowDown size={16} />
-          ) : (
-            <ArrowUp size={16} />
+          {trend !== undefined && (
+            <div className={`flex items-center gap-1 text-sm font-medium transition-colors duration-300 ${getTrendColor(trend)} ml-2`}>
+              {getTrendIcon(trend)}
+              <span>{Math.abs(trend).toFixed(1)}%</span>
+            </div>
           )}
-          <span className="ml-1">{trend.value} vs. mes anterior</span>
         </div>
-      )}
+        <div className="text-2xl font-bold text-primary-unified group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">
+          {formatValue(value, format)}
+        </div>
+      </div>
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { RechargePackageData } from "@/lib/types";
 import Card from "@/components/ui/Card";
-import { Badge } from "lucide-react"; // Usaremos un ícono
+// import { Badge } from "lucide-react"; // Usaremos un ícono
 
 interface TableProps {
   data: RechargePackageData[];
