@@ -104,7 +104,7 @@ export default function OperacionalPage() {
         cancelacion: Math.round(cancelacionRate),
         eficiencia: eficiencia,
         diasActivos: diasActivos,
-        ingresos: Math.floor(correctos * (45000 + Math.random() * 25000)) // Ingresos estimados basados en viajes
+        ingresos: Math.floor(correctos * (45000 + (parseFloat(String(record[0])) % 25000))) // Ingresos estimados basados en viajes y ID del conductor
       };
     });
   }
@@ -115,11 +115,14 @@ export default function OperacionalPage() {
     const promedioEficiencia = data.length > 0 ? data.reduce((sum, record) => sum + (parseFloat(String(record[21])) || 0), 0) / data.length : 0; // eficiencia_calculada
     const totalSolicitudes = data.reduce((sum, record) => sum + (parseFloat(String(record[18])) || 0), 0); // asignaciones_clean
 
+    // Convertir eficiencia a porcentaje si está en decimal
+    const eficienciaBase = promedioEficiencia > 1 ? promedioEficiencia : promedioEficiencia * 100;
+
     const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'];
     return months.map((month, index) => ({
       mes: month,
       conductoresActivos: Math.floor(totalConductores * (0.8 + index * 0.03)),
-      eficiencia: Math.floor(promedioEficiencia * (0.9 + index * 0.02)),
+      eficiencia: Math.floor(eficienciaBase * (0.9 + index * 0.02)),
       solicitudes: Math.floor(totalSolicitudes * (0.85 + index * 0.025))
     }));
   }
@@ -143,28 +146,28 @@ export default function OperacionalPage() {
     {
       title: "Solicitudes Totales",
       subtitle: "Número total de viajes solicitados en el período",
-      value: getValue(apiData, 18), // asignaciones_clean
+      value: finalProcessedData ? finalProcessedData.kpis.solicitudesTotales : 0, // Suma de todas las asignaciones
       trend: apiData && apiData.length > 1 ? calculateTrend(apiData, 18) : 0,
       format: "number" as const
     },
     {
       title: "Eficiencia Operativa",
       subtitle: "Indicador general de eficiencia basado en viajes completados vs. cancelados",
-      value: getValue(apiData, 21) * 100, // eficiencia_calculada
+      value: finalProcessedData ? finalProcessedData.distribution.percentage : 0, // Usar el mismo cálculo que la distribución
       trend: apiData && apiData.length > 1 ? calculateTrend(apiData, 21) : 0,
       format: "percentage" as const
     },
     {
       title: "Efectividad Conductores",
       subtitle: "% de conductores activos que atendieron al menos una solicitud",
-      value: (getValue(apiData, 19) / getValue(apiData, 18)) * 100, // correctos_clean / asignaciones_clean
+      value: finalProcessedData ? finalProcessedData.kpis.efectividadConductores : 0, // Cálculo correcto de todos los registros
       trend: apiData && apiData.length > 1 ? calculateTrend(apiData, 19) : 0,
       format: "percentage" as const
     },
     {
       title: "Días Activos Promedio",
       subtitle: "Promedio de días activos de los conductores",
-      value: getValue(apiData, 20), // dias_activo
+      value: finalProcessedData ? finalProcessedData.kpis.tiempoPromedioAtencion : 0, // Promedio correcto de todos los registros
       trend: apiData && apiData.length > 1 ? calculateTrend(apiData, 20) : 0,
       format: "number" as const
     }
@@ -181,7 +184,7 @@ export default function OperacionalPage() {
     {
       tipo: 'KPI',
       metrica: 'Eficiencia Operativa',
-      valor: finalProcessedData.kpis.eficienciaOperativa,
+      valor: finalProcessedData.distribution.percentage,
       tendencia: apiData && apiData.length > 1 ? calculateTrend(apiData, 21) : 0 // eficiencia_calculada
     },
     {
@@ -206,7 +209,7 @@ export default function OperacionalPage() {
 
   // Prepare KPI data for alerts solo si hay datos
   const kpiData = finalProcessedData ? {
-    eficienciaOperativa: finalProcessedData.kpis.eficienciaOperativa,
+    eficienciaOperativa: finalProcessedData.distribution.percentage,
     efectividadConductores: finalProcessedData.kpis.efectividadConductores,
     tiempoPromedioAtencion: finalProcessedData.kpis.tiempoPromedioAtencion,
     solicitudesTotales: finalProcessedData.kpis.solicitudesTotales
@@ -385,7 +388,7 @@ export default function OperacionalPage() {
                   <div className="grid grid-cols-2 gap-4 text-center">
                     <div>
                       <div className="text-lg font-bold text-yellow-400">
-                        {finalProcessedData.drivers.sort((a, b) => b.viajes - a.viajes)[0].viajes}
+                        {finalProcessedData.drivers.length > 0 ? finalProcessedData.drivers.sort((a, b) => b.viajes - a.viajes)[0].viajes : 0}
                       </div>
                       <div className="text-xs text-slate-400">Mejor performance</div>
                     </div>
@@ -711,7 +714,7 @@ export default function OperacionalPage() {
                                       'bg-gradient-to-r from-yellow-500 to-yellow-400'
                                   }`}
                                 style={{
-                                  width: `${Math.max(5, (driver.viajes / Math.max(1, finalProcessedData.drivers.sort((a, b) => b.viajes - a.viajes)[0].viajes)) * 100)}%`
+                                  width: `${Math.max(5, (driver.viajes / Math.max(1, finalProcessedData.drivers.length > 0 ? finalProcessedData.drivers.sort((a, b) => b.viajes - a.viajes)[0].viajes : 1)) * 100)}%`
                                 }}
                               ></div>
                             </div>
@@ -771,10 +774,10 @@ export default function OperacionalPage() {
                           <div className="flex items-center gap-4">
                             {/* Ranking Badge */}
                             <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${index === 0 ? 'bg-red-600 text-red-100' :
-                                index === 1 ? 'bg-red-500 text-red-100' :
-                                  index === 2 ? 'bg-orange-600 text-orange-100' :
-                                    index === 3 ? 'bg-orange-500 text-orange-100' :
-                                      'bg-yellow-600 text-yellow-100'
+                              index === 1 ? 'bg-red-500 text-red-100' :
+                                index === 2 ? 'bg-orange-600 text-orange-100' :
+                                  index === 3 ? 'bg-orange-500 text-orange-100' :
+                                    'bg-yellow-600 text-yellow-100'
                               }`}>
                               {index + 1}
                             </div>
@@ -797,9 +800,9 @@ export default function OperacionalPage() {
                             <div className="w-full bg-slate-700 rounded-full h-2">
                               <div
                                 className={`h-2 rounded-full transition-all duration-500 ${driver.eficiencia < 20 ? 'bg-gradient-to-r from-red-600 to-red-500' :
-                                    driver.eficiencia < 40 ? 'bg-gradient-to-r from-red-500 to-orange-500' :
-                                      driver.eficiencia < 60 ? 'bg-gradient-to-r from-orange-500 to-yellow-500' :
-                                        'bg-gradient-to-r from-yellow-500 to-yellow-400'
+                                  driver.eficiencia < 40 ? 'bg-gradient-to-r from-red-500 to-orange-500' :
+                                    driver.eficiencia < 60 ? 'bg-gradient-to-r from-orange-500 to-yellow-500' :
+                                      'bg-gradient-to-r from-yellow-500 to-yellow-400'
                                   }`}
                                 style={{ width: `${Math.max(5, driver.eficiencia)}%` }}
                               ></div>
@@ -825,7 +828,7 @@ export default function OperacionalPage() {
                     </div>
                     <div>
                       <div className="text-lg font-semibold text-yellow-400">
-                        {finalProcessedData.drivers.sort((a, b) => a.eficiencia - b.eficiencia)[0].eficiencia.toFixed(1)}%
+                        {finalProcessedData.drivers.length > 0 ? finalProcessedData.drivers.sort((a, b) => a.eficiencia - b.eficiencia)[0].eficiencia.toFixed(1) : 0}%
                       </div>
                       <div className="text-xs text-slate-400">Menor eficiencia</div>
                     </div>
@@ -1235,7 +1238,7 @@ export default function OperacionalPage() {
                           <div
                             className="bg-gradient-to-r from-blue-500 to-blue-400 h-2 rounded-full transition-all duration-500"
                             style={{
-                              width: `${(driver.viajes / finalProcessedData.drivers.sort((a, b) => b.viajes - a.viajes)[0].viajes) * 100}%`
+                              width: `${finalProcessedData.drivers.length > 0 ? (driver.viajes / finalProcessedData.drivers.sort((a, b) => b.viajes - a.viajes)[0].viajes) * 100 : 0}%`
                             }}
                           ></div>
                         </div>
@@ -1249,11 +1252,11 @@ export default function OperacionalPage() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div className="text-center p-6 bg-gradient-to-br from-yellow-500/10 to-yellow-600/10 rounded-xl border border-yellow-500/20">
                 <div className="text-3xl font-bold text-yellow-400 mb-2">
-                  {finalProcessedData.drivers.sort((a, b) => b.viajes - a.viajes)[0].viajes}
+                  {finalProcessedData.drivers.length > 0 ? finalProcessedData.drivers.sort((a, b) => b.viajes - a.viajes)[0].viajes : 0}
                 </div>
                 <div className="text-lg text-slate-300 font-medium">Mejor Performance</div>
                 <div className="text-sm text-slate-400 mt-1">
-                  {finalProcessedData.drivers.sort((a, b) => b.viajes - a.viajes)[0].name.split(' ')[0]}
+                  {finalProcessedData.drivers.length > 0 ? finalProcessedData.drivers.sort((a, b) => b.viajes - a.viajes)[0].name.split(' ')[0] : 'N/A'}
                 </div>
               </div>
               <div className="text-center p-6 bg-gradient-to-br from-green-500/10 to-green-600/10 rounded-xl border border-green-500/20">
