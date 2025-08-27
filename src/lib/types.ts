@@ -37,7 +37,7 @@ export interface FilterOptions {
   // New properties for enhanced filtering (Requirements 2.1, 2.2, 2.3, 2.4, 2.5, 2.6)
   serviceIds?: string[];
   metricTypes?: string[];
-  alertPriorities?: string[];
+
 }
 
 // Enhanced filter state interface for the filter system
@@ -55,7 +55,7 @@ export interface ServiceFilterOption {
   name: string;
   color: string;
   icon?: string;
-  alertColor?: 'yellow' | 'green' | 'blue' | 'pink' | 'gray';
+
 }
 
 // Temporal filter option interface
@@ -111,7 +111,7 @@ export interface ServiceColorScheme {
   background: string;
   border: string;
   accent: string;
-  alertColor: 'yellow' | 'green' | 'blue' | 'pink' | 'gray';
+
 }
 
 // Service metrics for service cards (Requirements 3.1, 3.2, 3.5)
@@ -133,18 +133,7 @@ export interface ServiceCard {
   path: string;
 }
 
-// Alert interface with service-specific color coding (Requirements 4.1, 4.2, 4.3, 4.4, 4.5, 4.6)
-export interface Alert {
-  id: string;
-  type: 'operational' | 'financial' | 'marketing' | 'technical';
-  priority: 'high' | 'medium' | 'low';
-  title: string;
-  message: string;
-  serviceColor: 'yellow' | 'green' | 'blue' | 'pink' | 'gray';
-  timestamp: Date;
-  actionable: boolean;
-  actionUrl?: string;
-}
+
 
 // Service configuration for system setup (Requirements 3.1, 4.2)
 export interface ServiceConfiguration {
@@ -195,9 +184,9 @@ export interface TopServicesRanking {
 // Real-time update interface (Requirements 9.1, 9.2, 9.3, 9.4, 9.5)
 export interface RealTimeUpdate {
   timestamp: Date;
-  type: 'kpi' | 'alert' | 'service_status';
+  type: 'kpi' | 'service_status';
   serviceId?: string;
-  data: GlobalKPI | Alert | ServiceCard | Record<string, unknown>;
+  data: GlobalKPI | ServiceCard | Record<string, unknown>;
   priority: 'high' | 'medium' | 'low';
 }
 
@@ -252,7 +241,6 @@ export interface ControlCenterSummaryProps {
   kpis: ServiceKPI[];
   quickCharts: QuickChart[];
   topVariables: TopVariable[];
-  serviceAlerts: Alert[];
   serviceId: string;
   colorScheme: ServiceColorScheme;
 }

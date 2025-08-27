@@ -52,21 +52,10 @@ export function useExecutiveDashboard(filters: GlobalFilters) {
         ];
     }, [data]);
 
-    const kpiDataForAlerts = useMemo(() => {
-        if (!data) return {};
-        return {
-            ingresosTotales: data.kpis.ingresosTotales.value,
-            usuariosActivos: data.kpis.usuariosActivos.value,
-            roi: data.kpis.roi.value,
-            eficienciaOperativa: data.kpis.eficienciaOperativa.value
-        };
-    }, [data]);
-
     return {
         data,
         executiveKPIs,
         exportData,
-        kpiDataForAlerts,
         isLoading,
         refetch: fetchData
     };

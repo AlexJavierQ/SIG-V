@@ -1,51 +1,29 @@
-'use client';
-
-import React, { memo, useMemo, useCallback } from 'react';
-import { usePerformanceOptimization } from '../../hooks/usePerformanceOptimization';
+import React, { memo } from 'react';
+import { ResponsiveContainer } from 'recharts';
 
 interface OptimizedChartProps {
-    data: any[];
-    ChartComponent: React.ComponentType<any>;
-    chartProps?: any;
-    dependencies?: any[];
+    children: React.ReactNode;
+    height?: number | string;
+    width?: string;
     className?: string;
 }
 
-export const OptimizedChart: React.FC<OptimizedChartProps> = memo(({
-    data,
-    ChartComponent,
-    chartProps = {},
-    dependencies = [],
-    className = ''
+// Componente optimizado para gráficos con memo
+const OptimizedChart = memo<OptimizedChartProps>(({
+    children,
+    height = "100%",
+    width = "100%",
+    className = ""
 }) => {
-    const { memoizeData } = usePerformanceOptimization();
-
-    // Memoize chart data to prevent unnecessary re-renders
-    const memoizedData = useMemo(() => {
-        return memoizeData(data, [data, ...dependencies]);
-    }, [data, dependencies, memoizeData]);
-
-    // Memoize chart props
-    const memoizedProps = useMemo(() => ({
-        data: memoizedData,
-        ...chartProps
-    }), [memoizedData, chartProps]);
-
-    const handleChartInteraction = useCallback((event: any) => {
-        // Handle chart interactions efficiently
-        if (chartProps.onInteraction) {
-            chartProps.onInteraction(event);
-        }
-    }, [chartProps]);
-
     return (
-        <div className={`optimized-chart-container ${className}`}>
-            <ChartComponent
-                {...memoizedProps}
-                onInteraction={handleChartInteraction}
-            />
+        <div className={className}>
+            <ResponsiveContainer width={width} height={height}>
+                {children}
+            </ResponsiveContainer>
         </div>
     );
 });
 
 OptimizedChart.displayName = 'OptimizedChart';
+
+export default OptimizedChart;

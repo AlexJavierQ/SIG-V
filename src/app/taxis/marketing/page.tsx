@@ -191,23 +191,12 @@ export default function MarketingPage() {
     efectividadSolicitudes: getValue(apiData, 11) // efectividad_solicitudes
   })) : [];
 
-  // Prepare KPI data for alerts
-  const kpiData = apiData ? {
-    registradosTotales: getValue(apiData, 4), // registrados_totales
-    registradosNuevos: getValue(apiData, 5), // registrados_nuevos
-    solicitaronNuevos: getValue(apiData, 6), // solicitaron_nuevos
-    abrenYNoPiden: getValue(apiData, 8), // abren_y_no_piden
-    efectividadNuevos: getValue(apiData, 9), // efectividad_nuevos
-    efectividadUsuarios: getValue(apiData, 10) // efectividad_usuarios
-  } : {};
-
   return (
     <DashboardLayout
       title="Dashboard de Marketing"
       subtitle="Análisis de adquisición, retención y campañas"
       exportData={exportData}
       dashboardType="marketing"
-      kpiData={kpiData}
     >
       <div className="space-y-8">
         {/* Compact Filters */}

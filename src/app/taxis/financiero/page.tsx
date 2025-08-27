@@ -23,11 +23,15 @@ import CompactFilters from "@/components/ui/CompactFilters";
 import { useFilters } from "@/contexts/FiltersContext";
 import { useFinancialData } from "@/hooks/useApiData";
 import ApiDebugPanel from "@/components/ui/ApiDebugPanel";
+import ChartOverlay from "@/components/ui/ChartOverlay";
+import Card from "@/components/ui/Card";
 
 const COLORS = ['#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#3B82F6'];
 
 export default function FinancialPage() {
   const [activeOverlay, setActiveOverlay] = useState<string | null>(null);
+  const [loyaltyTableOverlayOpen, setLoyaltyTableOverlayOpen] = useState(false);
+  const [commissionsTableOverlayOpen, setCommissionsTableOverlayOpen] = useState(false);
   const { filters } = useFilters();
 
   // Hook para datos del endpoint real
@@ -40,7 +44,7 @@ export default function FinancialPage() {
   } = useFinancialData(true); // Auto-fetch enabled
 
   // Funciones auxiliares para procesar datos del endpoint
-  const getValue = (dataArray: any[], index: number, defaultValue: number = 0): number => {
+  const getValue = (dataArray: unknown[], index: number, defaultValue: number = 0): number => {
     if (!dataArray || dataArray.length === 0) return defaultValue;
     const record = dataArray[0];
     return parseFloat(record[index]) || defaultValue;
@@ -152,22 +156,12 @@ export default function FinancialPage() {
     conductoresClean: getValue(apiData, 16) // conductores_clean
   })) : [];
 
-  // Prepare KPI data for alerts
-  const kpiData = apiData ? {
-    ingresosTotales: getValue(apiData, 4), // ingresos_totales
-    cacTotal: getValue(apiData, 9) + getValue(apiData, 10), // CAC_conductor + CAC_cliente
-    churnConductores: getValue(apiData, 11), // churn_conductores
-    churnClientes: getValue(apiData, 12), // churn_clientes
-    margenNeto: getValue(apiData, 4) - (getValue(apiData, 9) + getValue(apiData, 10)) // ingresos - costos
-  } : {};
-
   return (
     <DashboardLayout
       title="Dashboard Financiero"
       subtitle="Análisis de rentabilidad y métricas financieras"
       exportData={exportData}
       dashboardType="financiero"
-      kpiData={kpiData}
     >
       <div className="space-y-8">
         {/* Compact Filters */}
@@ -193,55 +187,55 @@ export default function FinancialPage() {
         )}
 
         {/* Mostrar contenido solo si hay datos del endpoint o usar datos mock */}
-        <div className="space-y-8">
+        <div className="space-y-6">
           {/* Resumen de Rentabilidad */}
           <DashboardSection
             title="Resumen de Rentabilidad"
             subtitle="Indicadores financieros principales"
             icon={DollarSign}
           >
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-gradient-to-br from-slate-800/80 to-slate-700/60 backdrop-blur-sm border border-slate-600/50 rounded-xl p-6 shadow-lg relative">
-                <div className="absolute top-4 right-4">
-                  <div className="w-8 h-8 bg-yellow-500/20 rounded-full flex items-center justify-center">
-                    <span className="text-yellow-400 text-lg">💰</span>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-gradient-to-br from-slate-800/80 to-slate-700/60 backdrop-blur-sm border border-slate-600/50 rounded-xl p-4 shadow-lg relative">
+                <div className="absolute top-3 right-3">
+                  <div className="w-6 h-6 bg-yellow-500/20 rounded-full flex items-center justify-center">
+                    <span className="text-yellow-400 text-sm">💰</span>
                   </div>
                 </div>
                 <div className="mb-2">
                   <div className="text-sm text-slate-400 mb-1">Ingresos Totales</div>
                   <div className="text-xs text-slate-500">Suma total por establecimiento</div>
                 </div>
-                <div className="text-3xl font-bold text-white mb-2">
+                <div className="text-2xl font-bold text-white mb-2">
                   {apiData ? getValue(apiData, 14).toLocaleString() : '12581'}
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-slate-800/80 to-slate-700/60 backdrop-blur-sm border border-slate-600/50 rounded-xl p-6 shadow-lg relative">
-                <div className="absolute top-4 right-4">
-                  <div className="w-8 h-8 bg-green-500/20 rounded-full flex items-center justify-center">
-                    <span className="text-green-400 text-lg">🚀</span>
+              <div className="bg-gradient-to-br from-slate-800/80 to-slate-700/60 backdrop-blur-sm border border-slate-600/50 rounded-xl p-4 shadow-lg relative">
+                <div className="absolute top-3 right-3">
+                  <div className="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center">
+                    <span className="text-green-400 text-sm">🚀</span>
                   </div>
                 </div>
                 <div className="mb-2">
                   <div className="text-sm text-slate-400 mb-1">Costos Totales (CAC)</div>
                   <div className="text-xs text-slate-500">Costo de adquisición y operación</div>
                 </div>
-                <div className="text-3xl font-bold text-white mb-2">
+                <div className="text-2xl font-bold text-white mb-2">
                   {apiData ? (getValue(apiData, 9) + getValue(apiData, 10)).toFixed(0) : '87'}
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-slate-800/80 to-slate-700/60 backdrop-blur-sm border border-slate-600/50 rounded-xl p-6 shadow-lg relative">
-                <div className="absolute top-4 right-4">
-                  <div className="w-8 h-8 bg-orange-500/20 rounded-full flex items-center justify-center">
-                    <span className="text-orange-400 text-lg">😊</span>
+              <div className="bg-gradient-to-br from-slate-800/80 to-slate-700/60 backdrop-blur-sm border border-slate-600/50 rounded-xl p-4 shadow-lg relative">
+                <div className="absolute top-3 right-3">
+                  <div className="w-6 h-6 bg-orange-500/20 rounded-full flex items-center justify-center">
+                    <span className="text-orange-400 text-sm">😊</span>
                   </div>
                 </div>
                 <div className="mb-2">
                   <div className="text-sm text-slate-400 mb-1">Margen Neto (Ingresos - Costos)</div>
                   <div className="text-xs text-slate-500">Rentabilidad neta del período</div>
                 </div>
-                <div className="text-3xl font-bold text-white mb-2">
+                <div className="text-2xl font-bold text-white mb-2">
                   {apiData ? (getValue(apiData, 14) - (getValue(apiData, 9) + getValue(apiData, 10))).toLocaleString() : '12494'}
                 </div>
               </div>
@@ -254,7 +248,7 @@ export default function FinancialPage() {
             subtitle="Métricas de fidelización de conductores y clientes"
             icon={Users}
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Churn Rate Conductores - Miniatura */}
               <div
                 className="bg-gradient-to-br from-slate-800/80 to-slate-700/60 backdrop-blur-sm border border-slate-600/50 rounded-xl p-6 shadow-lg cursor-pointer hover:shadow-lg transition-all duration-300 hover:border-2 hover:border-red-400 hover:shadow-red-400/20 relative group"
@@ -307,34 +301,43 @@ export default function FinancialPage() {
 
               {/* Top Clientes por Lealtad */}
               <div className="md:col-span-2">
-                <div className="bg-gradient-to-br from-slate-800/80 to-slate-700/60 backdrop-blur-sm border border-slate-600/50 rounded-xl p-6 shadow-lg">
-                  <div className="flex items-center gap-2 mb-4">
+                <div
+                  className="bg-gradient-to-br from-slate-800/80 to-slate-700/60 backdrop-blur-sm border border-slate-600/50 rounded-xl p-4 shadow-lg cursor-pointer hover:border-blue-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10 relative"
+                  onClick={() => setLoyaltyTableOverlayOpen(true)}
+                >
+                  <div className="flex items-center justify-between mb-3">
                     <h3 className="text-lg font-semibold text-white">Top Clientes por Lealtad</h3>
-                    <div className="w-4 h-4 text-blue-400">ℹ️</div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 text-blue-400">ℹ️</div>
+                      <div className="text-xs text-blue-400 font-medium">Click para expandir</div>
+                    </div>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b border-slate-600">
-                          <th className="text-left py-3 px-4 text-slate-300">CLIENTE</th>
-                          <th className="text-left py-3 px-4 text-slate-300">CIUDAD</th>
-                          <th className="text-left py-3 px-4 text-slate-300">DÍAS DE USO</th>
+                          <th className="text-left py-2 px-3 text-slate-300 text-xs">CLIENTE</th>
+                          <th className="text-left py-2 px-3 text-slate-300 text-xs">CIUDAD</th>
+                          <th className="text-left py-2 px-3 text-slate-300 text-xs">DÍAS DE USO</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {retentionData.map((client, index) => (
+                        {retentionData.slice(0, 3).map((client, index) => (
                           <tr key={index} className="border-b border-slate-700/50 hover:bg-slate-700/30">
-                            <td className="py-3 px-4 flex items-center gap-2">
-                              {client.crown && <span className="text-yellow-400">👑</span>}
-                              <span className="text-white">{client.name}</span>
+                            <td className="py-2 px-3 flex items-center gap-2">
+                              {client.crown && <span className="text-yellow-400 text-sm">👑</span>}
+                              <span className="text-white text-sm">{client.name}</span>
                             </td>
-                            <td className="py-3 px-4 text-slate-300">{client.city}</td>
-                            <td className="py-3 px-4 text-white font-semibold">{client.days}</td>
+                            <td className="py-2 px-3 text-slate-300 text-sm">{client.city}</td>
+                            <td className="py-2 px-3 text-white font-semibold text-sm">{client.days}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
+
+                  {/* Indicador de que es clickeable */}
+                  <div className="absolute top-2 right-2 w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
                 </div>
               </div>
             </div>
@@ -346,7 +349,7 @@ export default function FinancialPage() {
             subtitle="Distribución de ingresos por canal y comisiones"
             icon={PieChart}
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Ingresos por Canal de Venta - Miniatura Mejorada */}
               <div
                 className="bg-gradient-to-br from-slate-800/80 to-slate-700/60 backdrop-blur-sm border border-slate-600/50 rounded-xl p-6 shadow-lg cursor-pointer hover:shadow-lg transition-all duration-300 hover:border-2 hover:border-purple-400 hover:shadow-purple-400/20 relative group"
@@ -412,15 +415,18 @@ export default function FinancialPage() {
 
               {/* % Comisiones por Ciudad y Segmento - Miniatura */}
               <div
-                className="bg-gradient-to-br from-slate-800/80 to-slate-700/60 backdrop-blur-sm border border-slate-600/50 rounded-xl p-6 shadow-lg cursor-pointer hover:shadow-lg transition-all duration-300 hover:border-2 hover:border-green-400 hover:shadow-green-400/20 relative group"
-                onClick={() => setActiveOverlay('commissions')}
+                className="bg-gradient-to-br from-slate-800/80 to-slate-700/60 backdrop-blur-sm border border-slate-600/50 rounded-xl p-4 shadow-lg cursor-pointer hover:shadow-lg transition-all duration-300 hover:border-2 hover:border-green-400 hover:shadow-green-400/20 relative group"
+                onClick={() => setCommissionsTableOverlayOpen(true)}
               >
-                <div className="absolute top-4 right-4 w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                <div className="flex items-center gap-2 mb-4">
-                  <h3 className="text-lg font-semibold text-white">% Comisiones por Ciudad y Segmento</h3>
-                  <div className="w-4 h-4 text-blue-400">ℹ️</div>
+                <div className="absolute top-2 right-2 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-lg font-semibold text-white">% Comisiones por Ciudad</h3>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 text-blue-400">ℹ️</div>
+                    <div className="text-xs text-green-400 font-medium">Click para expandir</div>
+                  </div>
                 </div>
-                <div className="h-32">
+                <div className="h-24">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={commissionsByCity}>
                       <XAxis dataKey="city" hide />
@@ -431,24 +437,19 @@ export default function FinancialPage() {
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
-                <div className="flex justify-center gap-4 mt-2">
+                <div className="flex justify-center gap-3 mt-2">
                   <div className="flex items-center gap-1">
-                    <div className="w-3 h-3 bg-purple-500 rounded"></div>
+                    <div className="w-2 h-2 bg-purple-500 rounded"></div>
                     <span className="text-xs text-slate-400">Ejecutivo</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <div className="w-3 h-3 bg-green-500 rounded"></div>
+                    <div className="w-2 h-2 bg-green-500 rounded"></div>
                     <span className="text-xs text-slate-400">Regular</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <div className="w-3 h-3 bg-yellow-500 rounded"></div>
+                    <div className="w-2 h-2 bg-yellow-500 rounded"></div>
                     <span className="text-xs text-slate-400">VIP</span>
                   </div>
-                </div>
-                <div className="text-center mt-4">
-                  <span className="text-xs text-slate-400 group-hover:text-green-400 transition-colors">
-                    Click para expandir
-                  </span>
                 </div>
               </div>
             </div>
@@ -717,6 +718,263 @@ export default function FinancialPage() {
             onRefetch={apiRefetch}
           />
         )}
+
+        {/* Overlay para Tabla de Clientes por Lealtad */}
+        <ChartOverlay
+          isOpen={loyaltyTableOverlayOpen}
+          onClose={() => setLoyaltyTableOverlayOpen(false)}
+          title="Tabla Completa de Clientes por Lealtad"
+        >
+          <div className="space-y-6">
+            {/* Estadísticas Principales */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="text-center p-6 bg-gradient-to-br from-yellow-500/10 to-yellow-600/10 rounded-xl border border-yellow-500/20">
+                <div className="text-4xl font-bold text-yellow-400 mb-2">
+                  {retentionData.filter(c => c.crown).length}
+                </div>
+                <div className="text-lg text-slate-300 font-medium">Clientes VIP</div>
+                <div className="text-sm text-slate-400 mt-1">Con corona premium</div>
+              </div>
+              <div className="text-center p-6 bg-gradient-to-br from-blue-500/10 to-blue-600/10 rounded-xl border border-blue-500/20">
+                <div className="text-4xl font-bold text-blue-400 mb-2">
+                  {Math.round(retentionData.reduce((sum, c) => sum + c.days, 0) / retentionData.length)}
+                </div>
+                <div className="text-lg text-slate-300 font-medium">Promedio Días</div>
+                <div className="text-sm text-slate-400 mt-1">Días de uso promedio</div>
+              </div>
+              <div className="text-center p-6 bg-gradient-to-br from-green-500/10 to-green-600/10 rounded-xl border border-green-500/20">
+                <div className="text-4xl font-bold text-green-400 mb-2">
+                  {Math.max(...retentionData.map(c => c.days))}
+                </div>
+                <div className="text-lg text-slate-300 font-medium">Máximo Días</div>
+                <div className="text-sm text-slate-400 mt-1">Cliente más leal</div>
+              </div>
+            </div>
+
+            {/* Tabla Completa con Scroll */}
+            <div className="bg-slate-800/50 rounded-xl p-6">
+              <h3 className="text-xl font-semibold text-slate-200 mb-6">Todos los Clientes - Ordenados por Lealtad</h3>
+
+              {/* Encabezados */}
+              <div className="grid grid-cols-4 gap-4 pb-3 mb-4 border-b border-slate-700 text-sm font-medium text-slate-400">
+                <div>CLIENTE</div>
+                <div className="text-center">CIUDAD</div>
+                <div className="text-center">DÍAS DE USO</div>
+                <div className="text-center">CATEGORÍA</div>
+              </div>
+
+              {/* Contenido scrolleable */}
+              <div className="max-h-96 overflow-y-auto scrollbar-thin scrollbar-track-slate-800 scrollbar-thumb-slate-600 hover:scrollbar-thumb-slate-500">
+                <div className="space-y-2">
+                  {[...retentionData,
+                  { name: 'María L.', city: 'Cuenca', days: 420, crown: false },
+                  { name: 'Carlos R.', city: 'Loja', days: 380, crown: false },
+                  { name: 'Elena V.', city: 'Riobamba', days: 350, crown: false },
+                  { name: 'Pedro M.', city: 'Quevedo', days: 320, crown: false },
+                  { name: 'Laura S.', city: 'Loja', days: 290, crown: false },
+                  { name: 'Diego F.', city: 'Cuenca', days: 260, crown: false },
+                  { name: 'Carmen T.', city: 'Riobamba', days: 240, crown: false },
+                  { name: 'Roberto K.', city: 'Quevedo', days: 220, crown: false },
+                  { name: 'Isabel N.', city: 'Loja', days: 200, crown: false },
+                  { name: 'Andrés P.', city: 'Cuenca', days: 180, crown: false }
+                  ]
+                    .sort((a, b) => b.days - a.days)
+                    .map((client, index) => (
+                      <div
+                        key={`full-${client.name}-${index}`}
+                        className="grid grid-cols-4 gap-4 p-3 bg-slate-800/30 rounded-lg hover:bg-slate-800/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${index < 3 ? 'bg-yellow-600 text-yellow-100' :
+                            index < 5 ? 'bg-blue-600 text-blue-100' :
+                              'bg-slate-700 text-slate-300'
+                            }`}>
+                            {index + 1}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {client.crown && <span className="text-yellow-400">👑</span>}
+                            <span className="text-slate-200 font-medium">{client.name}</span>
+                          </div>
+                        </div>
+
+                        <div className="text-center text-slate-300 self-center">
+                          {client.city}
+                        </div>
+
+                        <div className="text-center self-center">
+                          <div className="text-lg font-bold text-blue-400">{client.days}</div>
+                        </div>
+
+                        <div className="text-center self-center">
+                          <span className={`px-2 py-1 rounded text-sm font-medium ${client.crown ? 'bg-yellow-500/20 text-yellow-400' :
+                            client.days >= 400 ? 'bg-green-500/20 text-green-400' :
+                              client.days >= 300 ? 'bg-blue-500/20 text-blue-400' :
+                                client.days >= 200 ? 'bg-orange-500/20 text-orange-400' :
+                                  'bg-slate-500/20 text-slate-400'
+                            }`}>
+                            {client.crown ? 'VIP' :
+                              client.days >= 400 ? 'Premium' :
+                                client.days >= 300 ? 'Gold' :
+                                  client.days >= 200 ? 'Silver' : 'Regular'}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+
+              {/* Footer con estadísticas */}
+              <div className="mt-6 pt-4 border-t border-slate-700 grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <div>
+                  <div className="text-lg font-bold text-slate-300">13</div>
+                  <div className="text-xs text-slate-400">Total Clientes</div>
+                </div>
+                <div>
+                  <div className="text-lg font-bold text-yellow-400">
+                    {retentionData.filter(c => c.crown).length}
+                  </div>
+                  <div className="text-xs text-slate-400">Clientes VIP</div>
+                </div>
+                <div>
+                  <div className="text-lg font-bold text-green-400">
+                    {Math.round(retentionData.reduce((sum, c) => sum + c.days, 0) / retentionData.length)}
+                  </div>
+                  <div className="text-xs text-slate-400">Promedio Días</div>
+                </div>
+                <div>
+                  <div className="text-lg font-bold text-blue-400">
+                    85%
+                  </div>
+                  <div className="text-xs text-slate-400">Tasa Retención</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ChartOverlay>
+
+        {/* Overlay para Tabla de Comisiones */}
+        <ChartOverlay
+          isOpen={commissionsTableOverlayOpen}
+          onClose={() => setCommissionsTableOverlayOpen(false)}
+          title="Tabla Completa de Comisiones por Ciudad y Segmento"
+        >
+          <div className="space-y-6">
+            {/* Estadísticas Principales */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="text-center p-6 bg-gradient-to-br from-purple-500/10 to-purple-600/10 rounded-xl border border-purple-500/20">
+                <div className="text-4xl font-bold text-purple-400 mb-2">
+                  {Math.round(commissionsByCity.reduce((sum, c) => sum + c.ejecutivo, 0) / commissionsByCity.length)}%
+                </div>
+                <div className="text-lg text-slate-300 font-medium">Ejecutivo Promedio</div>
+                <div className="text-sm text-slate-400 mt-1">Comisión segmento ejecutivo</div>
+              </div>
+              <div className="text-center p-6 bg-gradient-to-br from-green-500/10 to-green-600/10 rounded-xl border border-green-500/20">
+                <div className="text-4xl font-bold text-green-400 mb-2">
+                  {Math.round(commissionsByCity.reduce((sum, c) => sum + c.regular, 0) / commissionsByCity.length)}%
+                </div>
+                <div className="text-lg text-slate-300 font-medium">Regular Promedio</div>
+                <div className="text-sm text-slate-400 mt-1">Comisión segmento regular</div>
+              </div>
+              <div className="text-center p-6 bg-gradient-to-br from-yellow-500/10 to-yellow-600/10 rounded-xl border border-yellow-500/20">
+                <div className="text-4xl font-bold text-yellow-400 mb-2">
+                  {Math.round(commissionsByCity.reduce((sum, c) => sum + c.vip, 0) / commissionsByCity.length)}%
+                </div>
+                <div className="text-lg text-slate-300 font-medium">VIP Promedio</div>
+                <div className="text-sm text-slate-400 mt-1">Comisión segmento VIP</div>
+              </div>
+            </div>
+
+            {/* Tabla Completa con Scroll */}
+            <div className="bg-slate-800/50 rounded-xl p-6">
+              <h3 className="text-xl font-semibold text-slate-200 mb-6">Comisiones Detalladas por Ciudad y Segmento</h3>
+
+              {/* Encabezados */}
+              <div className="grid grid-cols-5 gap-4 pb-3 mb-4 border-b border-slate-700 text-sm font-medium text-slate-400">
+                <div>CIUDAD</div>
+                <div className="text-center">EJECUTIVO (%)</div>
+                <div className="text-center">REGULAR (%)</div>
+                <div className="text-center">VIP (%)</div>
+                <div className="text-center">PROMEDIO (%)</div>
+              </div>
+
+              {/* Contenido scrolleable */}
+              <div className="max-h-96 overflow-y-auto scrollbar-thin scrollbar-track-slate-800 scrollbar-thumb-slate-600 hover:scrollbar-thumb-slate-500">
+                <div className="space-y-2">
+                  {[...commissionsByCity,
+                  { city: 'Cuenca', ejecutivo: 15.5, regular: 17.8, vip: 21.2 },
+                  { city: 'Machala', ejecutivo: 14.8, regular: 17.2, vip: 20.5 },
+                  { city: 'Ambato', ejecutivo: 15.2, regular: 18.1, vip: 22.0 },
+                  { city: 'Manta', ejecutivo: 16.1, regular: 18.9, vip: 23.1 },
+                  { city: 'Portoviejo', ejecutivo: 14.9, regular: 17.5, vip: 21.8 },
+                  { city: 'Esmeraldas', ejecutivo: 15.8, regular: 18.3, vip: 22.5 }
+                  ].map((commission, index) => (
+                    <div
+                      key={`commission-${commission.city}-${index}`}
+                      className="grid grid-cols-5 gap-4 p-3 bg-slate-800/30 rounded-lg hover:bg-slate-800/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-slate-700 rounded-full flex items-center justify-center">
+                          <span className="text-slate-300 text-sm">🏙️</span>
+                        </div>
+                        <span className="text-slate-200 font-medium">{commission.city}</span>
+                      </div>
+
+                      <div className="text-center self-center">
+                        <span className="px-2 py-1 rounded bg-purple-500/20 text-purple-400 font-medium">
+                          {commission.ejecutivo.toFixed(1)}%
+                        </span>
+                      </div>
+
+                      <div className="text-center self-center">
+                        <span className="px-2 py-1 rounded bg-green-500/20 text-green-400 font-medium">
+                          {commission.regular.toFixed(1)}%
+                        </span>
+                      </div>
+
+                      <div className="text-center self-center">
+                        <span className="px-2 py-1 rounded bg-yellow-500/20 text-yellow-400 font-medium">
+                          {commission.vip.toFixed(1)}%
+                        </span>
+                      </div>
+
+                      <div className="text-center self-center">
+                        <div className="text-lg font-bold text-blue-400">
+                          {((commission.ejecutivo + commission.regular + commission.vip) / 3).toFixed(1)}%
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Footer con estadísticas */}
+              <div className="mt-6 pt-4 border-t border-slate-700 grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <div>
+                  <div className="text-lg font-bold text-slate-300">9</div>
+                  <div className="text-xs text-slate-400">Ciudades</div>
+                </div>
+                <div>
+                  <div className="text-lg font-bold text-purple-400">
+                    {Math.min(...commissionsByCity.map(c => c.ejecutivo)).toFixed(1)}%
+                  </div>
+                  <div className="text-xs text-slate-400">Mín. Ejecutivo</div>
+                </div>
+                <div>
+                  <div className="text-lg font-bold text-green-400">
+                    {Math.max(...commissionsByCity.map(c => c.regular)).toFixed(1)}%
+                  </div>
+                  <div className="text-xs text-slate-400">Máx. Regular</div>
+                </div>
+                <div>
+                  <div className="text-lg font-bold text-yellow-400">
+                    {Math.max(...commissionsByCity.map(c => c.vip)).toFixed(1)}%
+                  </div>
+                  <div className="text-xs text-slate-400">Máx. VIP</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ChartOverlay>
       </div>
     </DashboardLayout>
   );

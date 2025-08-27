@@ -209,23 +209,12 @@ export default function VentasPage() {
     satisfaccion: getValue(apiData, 11)
   })) : [];
 
-  // Prepare KPI data for alerts
-  const kpiData = apiData ? {
-    ventasActivas: getValue(apiData, 4),
-    solicitudes: getValue(apiData, 5),
-    efectividad: getValue(apiData, 6),
-    ticketPromedio: getValue(apiData, 7),
-    conversion: getValue(apiData, 8),
-    satisfaccion: getValue(apiData, 11)
-  } : {};
-
   return (
     <DashboardLayout
       title="Dashboard de Ventas y Uso"
       subtitle="Análisis de actividad comercial y patrones de uso"
       exportData={exportData}
       dashboardType="ventas"
-      kpiData={kpiData}
     >
       <div className="space-y-8">
         {/* Compact Filters */}

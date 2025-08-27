@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { Car, Users, Activity, TrendingUp, AlertTriangle, User } from "lucide-react";
 
 // --- Optimized Components ---
@@ -12,12 +12,13 @@ import { useOperativosData } from "@/hooks/useApiData";
 import ApiDebugPanel from "@/components/ui/ApiDebugPanel";
 import NoDataMessage from "@/components/ui/NoDataMessage";
 
-// --- Componentes UI ---
+// --- Componentes UI optimizados ---
 import Card from "@/components/ui/Card";
 import ChartOverlay from "@/components/ui/ChartOverlay";
+import { useDriverCalculations } from "@/hooks/useDriverCalculations";
 
-// --- Componentes de gráficos ---
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line } from 'recharts';
+// --- Componentes de gráficos optimizados ---
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line, Legend } from 'recharts';
 
 export default function OperacionalPage() {
   // Estados para overlays
@@ -25,6 +26,9 @@ export default function OperacionalPage() {
   const [driversActivityOverlayOpen, setDriversActivityOverlayOpen] = useState(false);
   const [topDriversOverlayOpen, setTopDriversOverlayOpen] = useState(false);
   const [trendsOverlayOpen, setTrendsOverlayOpen] = useState(false);
+  const [cancelationTableOverlayOpen, setCancelationTableOverlayOpen] = useState(false);
+  const [bottomDriversOverlayOpen, setBottomDriversOverlayOpen] = useState(false);
+  const [bottomEfficiencyOverlayOpen, setBottomEfficiencyOverlayOpen] = useState(false);
 
   // Hook para datos del endpoint real
   const {
@@ -49,44 +53,6 @@ export default function OperacionalPage() {
     if (previous === 0) return 0;
     return ((current - previous) / previous) * 100;
   };
-
-  // Procesar datos para los gráficos
-  const processedData = useMemo(() => {
-    if (!apiData || apiData.length === 0) return null;
-
-    // Mapeo correcto basado en la estructura real del endpoint:
-    // [0] Id Usuario, [1] Cédula, [2] Usuario (String), [3] F. Primer reporte, [4] F. Último reporte,
-    // [5] Asig., [6] Corr., [7] Corr.(%), [8] ciudad, [9] aplicacion, [10] pais, [11] ventas_canal,
-    // [12] atendidos_nuevos, [13] no_atendidos_nuevos, [14] corr_porcentaje, [15] fecha_primer_reporte,
-    // [16] fecha_ultimo_reporte, [17] usuario_nombre, [18] asignaciones_clean, [19] correctos_clean,
-    // [20] dias_activo, [21] eficiencia_calculada, [22] total_nuevos
-
-    const totalAsignaciones = apiData.reduce((sum, record) => sum + (parseFloat(String(record[18])) || 0), 0); // asignaciones_clean
-    const totalCorrectos = apiData.reduce((sum, record) => sum + (parseFloat(String(record[19])) || 0), 0); // correctos_clean
-
-    const promedioEficiencia = apiData.length > 0 ? apiData.reduce((sum, record) => sum + (parseFloat(String(record[21])) || 0), 0) / apiData.length : 0; // eficiencia_calculada
-    const promedioDiasActivos = apiData.length > 0 ? apiData.reduce((sum, record) => sum + (parseFloat(String(record[20])) || 0), 0) / apiData.length : 0; // dias_activo
-
-    return {
-      // KPIs principales basados en datos reales
-      kpis: {
-        solicitudesTotales: totalAsignaciones,
-        eficienciaOperativa: promedioEficiencia,
-        efectividadConductores: totalAsignaciones > 0 ? (totalCorrectos / totalAsignaciones) * 100 : 0,
-        tiempoPromedioAtencion: promedioDiasActivos
-      },
-      // Datos para distribución de viajes
-      distribution: {
-        exitosos: totalCorrectos,
-        fallidos: totalAsignaciones - totalCorrectos,
-        percentage: totalAsignaciones > 0 ? (totalCorrectos / totalAsignaciones) * 100 : 0
-      },
-      // Datos reales de conductores del endpoint
-      drivers: generateDriverDataFromEndpoint(apiData),
-      // Tendencias históricas basadas en datos reales
-      trends: generateHistoricalTrendsFromEndpoint(apiData)
-    };
-  }, [apiData]);
 
   // Función para generar datos de conductores desde el endpoint real
   function generateDriverDataFromEndpoint(data: unknown[][]) {
@@ -127,6 +93,51 @@ export default function OperacionalPage() {
     }));
   }
 
+  // Procesar datos para los gráficos
+  const processedData = useMemo(() => {
+    if (!apiData || apiData.length === 0) return null;
+
+    // Mapeo correcto basado en la estructura real del endpoint:
+    // [0] Id Usuario, [1] Cédula, [2] Usuario (String), [3] F. Primer reporte, [4] F. Último reporte,
+    // [5] Asig., [6] Corr., [7] Corr.(%), [8] ciudad, [9] aplicacion, [10] pais, [11] ventas_canal,
+    // [12] atendidos_nuevos, [13] no_atendidos_nuevos, [14] corr_porcentaje, [15] fecha_primer_reporte,
+    // [16] fecha_ultimo_reporte, [17] usuario_nombre, [18] asignaciones_clean, [19] correctos_clean,
+    // [20] dias_activo, [21] eficiencia_calculada, [22] total_nuevos
+
+    const totalAsignaciones = apiData.reduce((sum, record) => sum + (parseFloat(String(record[18])) || 0), 0); // asignaciones_clean
+    const totalCorrectos = apiData.reduce((sum, record) => sum + (parseFloat(String(record[19])) || 0), 0); // correctos_clean
+
+    const promedioEficiencia = apiData.length > 0 ? apiData.reduce((sum, record) => sum + (parseFloat(String(record[21])) || 0), 0) / apiData.length : 0; // eficiencia_calculada
+    const promedioDiasActivos = apiData.length > 0 ? apiData.reduce((sum, record) => sum + (parseFloat(String(record[20])) || 0), 0) / apiData.length : 0; // dias_activo
+
+    return {
+      // KPIs principales basados en datos reales
+      kpis: {
+        solicitudesTotales: totalAsignaciones,
+        eficienciaOperativa: promedioEficiencia,
+        efectividadConductores: totalAsignaciones > 0 ? (totalCorrectos / totalAsignaciones) * 100 : 0,
+        tiempoPromedioAtencion: promedioDiasActivos
+      },
+      // Datos para distribución de viajes
+      distribution: {
+        exitosos: totalCorrectos,
+        fallidos: totalAsignaciones - totalCorrectos,
+        percentage: totalAsignaciones > 0 ? (totalCorrectos / totalAsignaciones) * 100 : 0
+      },
+      // Datos reales de conductores del endpoint
+      drivers: generateDriverDataFromEndpoint(apiData),
+      // Tendencias históricas basadas en datos reales
+      trends: generateHistoricalTrendsFromEndpoint(apiData)
+    };
+  }, [apiData]);
+
+  // Solo usar datos del endpoint, sin fallbacks simulados
+  const finalProcessedData = processedData;
+
+  // Hook optimizado para cálculos de conductores - siempre pasar array válido
+  const driverCalculations = useDriverCalculations(finalProcessedData?.drivers || []);
+
+  // Early return para loading después de todos los hooks
   if (apiLoading) {
     return (
       <div className="flex items-center justify-center h-screen bg-slate-900">
@@ -138,37 +149,30 @@ export default function OperacionalPage() {
     );
   }
 
-  // Solo usar datos del endpoint, sin fallbacks simulados
-  const finalProcessedData = processedData;
-
   // KPIs principales basados únicamente en datos reales del endpoint
   const operationalKPIs = finalProcessedData ? [
     {
       title: "Solicitudes Totales",
       subtitle: "Número total de viajes solicitados en el período",
       value: finalProcessedData ? finalProcessedData.kpis.solicitudesTotales : 0, // Suma de todas las asignaciones
-      trend: apiData && apiData.length > 1 ? calculateTrend(apiData, 18) : 0,
       format: "number" as const
     },
     {
       title: "Eficiencia Operativa",
       subtitle: "Indicador general de eficiencia basado en viajes completados vs. cancelados",
       value: finalProcessedData ? finalProcessedData.distribution.percentage : 0, // Usar el mismo cálculo que la distribución
-      trend: apiData && apiData.length > 1 ? calculateTrend(apiData, 21) : 0,
       format: "percentage" as const
     },
     {
       title: "Efectividad Conductores",
       subtitle: "% de conductores activos que atendieron al menos una solicitud",
       value: finalProcessedData ? finalProcessedData.kpis.efectividadConductores : 0, // Cálculo correcto de todos los registros
-      trend: apiData && apiData.length > 1 ? calculateTrend(apiData, 19) : 0,
       format: "percentage" as const
     },
     {
       title: "Días Activos Promedio",
       subtitle: "Promedio de días activos de los conductores",
       value: finalProcessedData ? finalProcessedData.kpis.tiempoPromedioAtencion : 0, // Promedio correcto de todos los registros
-      trend: apiData && apiData.length > 1 ? calculateTrend(apiData, 20) : 0,
       format: "number" as const
     }
   ] : [];
@@ -207,29 +211,20 @@ export default function OperacionalPage() {
     }))
   ] : [];
 
-  // Prepare KPI data for alerts solo si hay datos
-  const kpiData = finalProcessedData ? {
-    eficienciaOperativa: finalProcessedData.distribution.percentage,
-    efectividadConductores: finalProcessedData.kpis.efectividadConductores,
-    tiempoPromedioAtencion: finalProcessedData.kpis.tiempoPromedioAtencion,
-    solicitudesTotales: finalProcessedData.kpis.solicitudesTotales
-  } : undefined;
-
   return (
     <DashboardLayout
       title="Dashboard Operativo"
       subtitle="Análisis en tiempo real del desempeño operacional"
       exportData={exportData}
       dashboardType="operacional"
-      kpiData={kpiData}
     >
-      <div className="space-y-8">
+      <div className="space-y-6">
         {/* Compact Filters */}
         <CompactFilters />
 
         {/* Mostrar mensaje de error si hay error */}
         {apiError && (
-          <Card className="p-8">
+          <Card className="p-6">
             <NoDataMessage
               title="Error al cargar datos"
               message={`Error de conexión: ${apiError}. Verifique que el endpoint esté disponible.`}
@@ -241,7 +236,7 @@ export default function OperacionalPage() {
 
         {/* Mostrar mensaje de no datos si no hay error pero tampoco datos */}
         {!apiError && !finalProcessedData && (
-          <Card className="p-8">
+          <Card className="p-6">
             <NoDataMessage
               title="No hay datos disponibles"
               message="No se encontraron datos en el endpoint. Verifique los filtros aplicados o intente actualizar."
@@ -253,14 +248,14 @@ export default function OperacionalPage() {
 
         {/* Mostrar contenido solo si hay datos */}
         {!apiError && finalProcessedData && (
-          <div className="space-y-8">
+          <div className="space-y-6">
             {/* Resumen del Servicio */}
             <DashboardSection
               title="Resumen del Servicio"
               subtitle="Métricas principales basadas en datos reales del endpoint"
               icon={Activity}
             >
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {operationalKPIs.map((kpi, index) => (
                   <MetricCard key={index} {...kpi} />
                 ))}
@@ -273,7 +268,7 @@ export default function OperacionalPage() {
               subtitle="Actividad de conductores y mejores performers"
               icon={Users}
             >
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* Actividad de Conductores - Miniatura Clickeable */}
                 <Card
                   className="p-6 relative bg-gradient-to-br from-slate-800/80 to-slate-700/60 backdrop-blur-sm border border-slate-600/50 cursor-pointer hover:border-green-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-green-500/10"
@@ -394,7 +389,7 @@ export default function OperacionalPage() {
                     </div>
                     <div>
                       <div className="text-lg font-bold text-green-400">
-                        {Math.round(finalProcessedData.drivers.sort((a, b) => b.viajes - a.viajes).slice(0, 5).reduce((sum, d) => sum + d.eficiencia, 0) / 5)}%
+                        {driverCalculations.calculateAverage(driverCalculations.getTopDrivers(5), 'eficiencia')}%
                       </div>
                       <div className="text-xs text-slate-400">Eficiencia promedio</div>
                     </div>
@@ -412,7 +407,7 @@ export default function OperacionalPage() {
               subtitle="Distribución de viajes y conductores problemáticos"
               icon={Car}
             >
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* Distribución de Viajes - Diseño Mejorado */}
                 <Card
                   className="p-6 relative bg-gradient-to-br from-slate-800/80 to-slate-700/60 backdrop-blur-sm border border-slate-600/50 cursor-pointer hover:border-blue-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10"
@@ -488,53 +483,57 @@ export default function OperacionalPage() {
                   <div className="absolute top-2 right-2 w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
                 </Card>
 
-                {/* Tasa de Cancelación - Tabla Scrolleable */}
-                <Card className="p-6 relative">
-                  <div className="flex items-center justify-between mb-4">
+                {/* Tasa de Cancelación - Tabla Compacta */}
+                <Card
+                  className="p-4 relative cursor-pointer hover:border-red-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-red-500/10"
+                  onClick={() => finalProcessedData && setCancelationTableOverlayOpen(true)}
+                >
+                  <div className="flex items-center justify-between mb-3">
                     <h3 className="text-lg font-semibold text-slate-200">Tasa de Cancelación</h3>
-                    <div className="group relative">
-                      <div className="w-5 h-5 rounded-full bg-slate-600 flex items-center justify-center cursor-help">
-                        <span className="text-xs text-slate-300">i</span>
+                    <div className="flex items-center gap-2">
+                      <div className="group relative">
+                        <div className="w-4 h-4 rounded-full bg-slate-600 flex items-center justify-center cursor-help">
+                          <span className="text-xs text-slate-300">i</span>
+                        </div>
+                        <div className="absolute right-0 top-6 w-56 bg-slate-700 text-slate-200 text-xs rounded-lg p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 shadow-xl">
+                          <p className="font-medium mb-1">Click para tabla completa</p>
+                          <p className="text-slate-300">Ver todos los conductores con scroll</p>
+                        </div>
                       </div>
-                      <div className="absolute right-0 top-8 w-64 bg-slate-700 text-slate-200 text-sm rounded-lg p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 shadow-xl">
-                        <p className="font-medium mb-2">Tabla scrolleable con todos los conductores</p>
-                        <p className="text-slate-300">Ordenados por tasa de cancelación</p>
-                      </div>
+                      <div className="text-xs text-red-400 font-medium">Click para expandir</div>
                     </div>
                   </div>
 
-                  {/* Encabezados de la tabla */}
-                  <div className="grid grid-cols-3 gap-4 pb-3 mb-4 border-b border-slate-700 text-sm font-medium text-slate-400">
+                  {/* Encabezados compactos */}
+                  <div className="grid grid-cols-3 gap-3 pb-2 mb-3 border-b border-slate-700 text-xs font-medium text-slate-400">
                     <div>CONDUCTOR</div>
-                    <div className="text-center">VIAJES ASIGNADOS</div>
-                    <div className="text-center">TASA CANCELACIÓN</div>
+                    <div className="text-center">ASIGNADOS</div>
+                    <div className="text-center">CANCELACIÓN</div>
                   </div>
 
-                  {/* Contenido scrolleable */}
-                  <div className="h-80 overflow-y-auto scrollbar-thin scrollbar-track-slate-800 scrollbar-thumb-slate-600 hover:scrollbar-thumb-slate-500">
-                    <div className="space-y-2">
+                  {/* Contenido scrolleable más compacto */}
+                  <div className="h-64 overflow-y-auto scrollbar-thin scrollbar-track-slate-800 scrollbar-thumb-slate-600 hover:scrollbar-thumb-slate-500">
+                    <div className="space-y-1">
                       {finalProcessedData.drivers
                         .sort((a, b) => b.cancelacion - a.cancelacion)
                         .map((driver, index) => (
                           <div
                             key={`${driver.name}-${index}`}
-                            className="grid grid-cols-3 gap-4 p-3 bg-slate-800/30 rounded-lg hover:bg-slate-800/50 transition-colors"
+                            className="grid grid-cols-3 gap-3 p-2 bg-slate-800/30 rounded hover:bg-slate-800/50 transition-colors"
                           >
-                            <div className="flex items-center gap-2">
-                              <div className="w-6 h-6 bg-slate-700 rounded-full flex items-center justify-center flex-shrink-0">
-                                <User className="w-3 h-3 text-slate-400" />
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div className="w-5 h-5 bg-slate-700 rounded-full flex items-center justify-center flex-shrink-0">
+                                <User className="w-2.5 h-2.5 text-slate-400" />
                               </div>
-                              <div className="min-w-0">
-                                <div className="font-medium text-slate-200 text-sm truncate">{driver.name}</div>
-                              </div>
+                              <div className="font-medium text-slate-200 text-xs truncate">{driver.name}</div>
                             </div>
 
-                            <div className="text-center text-slate-300 text-sm">
+                            <div className="text-center text-slate-300 text-xs self-center">
                               {driver.asignaciones}
                             </div>
 
-                            <div className="text-center">
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${driver.cancelacion >= 50 ? 'bg-red-500/20 text-red-400' :
+                            <div className="text-center self-center">
+                              <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${driver.cancelacion >= 50 ? 'bg-red-500/20 text-red-400' :
                                 driver.cancelacion >= 25 ? 'bg-yellow-500/20 text-yellow-400' :
                                   driver.cancelacion >= 15 ? 'bg-orange-500/20 text-orange-400' :
                                     'bg-green-500/20 text-green-400'
@@ -547,20 +546,23 @@ export default function OperacionalPage() {
                     </div>
                   </div>
 
-                  {/* Footer con estadísticas */}
-                  <div className="mt-4 pt-4 border-t border-slate-700 flex items-center justify-between text-sm text-slate-400">
-                    <div>Total: {finalProcessedData.drivers.length} conductores</div>
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                        <span>Alto riesgo (≥50%)</span>
+                  {/* Footer compacto */}
+                  <div className="mt-3 pt-3 border-t border-slate-700 flex items-center justify-between text-xs text-slate-400">
+                    <div>Total: {finalProcessedData.drivers.length}</div>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                        <span>Alto (≥50%)</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                        <span>Bajo riesgo (&lt;25%)</span>
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <span>Bajo (&lt;25%)</span>
                       </div>
                     </div>
                   </div>
+
+                  {/* Indicador de que es clickeable */}
+                  <div className="absolute top-2 right-2 w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
                 </Card>
               </div>
             </DashboardSection>
@@ -653,34 +655,39 @@ export default function OperacionalPage() {
               subtitle="Análisis de conductores con menor rendimiento"
               icon={AlertTriangle}
             >
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Bottom 5 Conductores por Viajes - Presentación Mejorada */}
-                <Card className="p-6 relative">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-slate-200">Bottom 5 Conductores por Viajes</h3>
-                    <div className="group relative">
-                      <div className="w-5 h-5 rounded-full bg-slate-600 flex items-center justify-center cursor-help">
-                        <span className="text-xs text-slate-300">i</span>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Bottom 5 Conductores por Viajes - Compacto */}
+                <Card
+                  className="p-4 relative cursor-pointer hover:border-red-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-red-500/10"
+                  onClick={() => finalProcessedData && setBottomDriversOverlayOpen(true)}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-base font-semibold text-slate-200">Bottom 5 por Viajes</h3>
+                    <div className="flex items-center gap-2">
+                      <div className="group relative">
+                        <div className="w-4 h-4 rounded-full bg-slate-600 flex items-center justify-center cursor-help">
+                          <span className="text-xs text-slate-300">i</span>
+                        </div>
+                        <div className="absolute right-0 top-6 w-64 bg-slate-700 text-slate-200 text-xs rounded-lg p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 shadow-xl">
+                          <p className="font-medium mb-1">Click para lista completa</p>
+                          <p className="text-slate-300">Ver todos los conductores con bajo rendimiento</p>
+                        </div>
                       </div>
-                      <div className="absolute right-0 top-8 w-80 bg-slate-700 text-slate-200 text-sm rounded-lg p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 shadow-xl">
-                        <p className="font-medium mb-2">Muestra los 5 conductores con menor rendimiento en viajes.</p>
-                        <p className="text-slate-300">Estos conductores requieren atención especial para mejorar su productividad.</p>
-                      </div>
+                      <div className="text-xs text-red-400 font-medium">Click para expandir</div>
                     </div>
                   </div>
-                  {/* Lista de Bottom 5 Conductores */}
-                  <div className="space-y-4">
+                  {/* Lista compacta */}
+                  <div className="space-y-2">
                     {finalProcessedData.drivers
                       .sort((a, b) => a.viajes - b.viajes)
                       .slice(0, 5)
                       .map((driver, index) => (
                         <div
                           key={`bottom-${driver.name}-${index}`}
-                          className="flex items-center justify-between p-4 bg-gradient-to-r from-red-900/20 to-red-800/10 rounded-lg border border-red-700/30 hover:border-red-500/50 transition-all duration-300"
+                          className="flex items-center justify-between p-3 bg-gradient-to-r from-red-900/20 to-red-800/10 rounded border border-red-700/30 hover:border-red-500/50 transition-all duration-300"
                         >
-                          <div className="flex items-center gap-4">
-                            {/* Ranking Badge - Colores de alerta */}
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${index === 0 ? 'bg-red-600 text-red-100' :
+                          <div className="flex items-center gap-3">
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs ${index === 0 ? 'bg-red-600 text-red-100' :
                               index === 1 ? 'bg-red-500 text-red-100' :
                                 index === 2 ? 'bg-orange-600 text-orange-100' :
                                   index === 3 ? 'bg-orange-500 text-orange-100' :
@@ -688,92 +695,83 @@ export default function OperacionalPage() {
                               }`}>
                               {index + 1}
                             </div>
-
-                            {/* Conductor Info */}
                             <div>
-                              <div className="font-semibold text-slate-200 text-lg">{driver.name}</div>
-                              <div className="text-sm text-slate-400">
-                                {driver.eficiencia.toFixed(1)}% eficiencia • {driver.cancelacion}% cancelación
+                              <div className="font-medium text-slate-200 text-sm">{driver.name}</div>
+                              <div className="text-xs text-slate-400">
+                                {driver.eficiencia.toFixed(1)}% • {driver.cancelacion}% canc.
                               </div>
                             </div>
                           </div>
 
-                          {/* Viajes y Barra de Progreso */}
-                          <div className="text-right min-w-0 flex-1 ml-4">
-                            <div className="text-2xl font-bold text-red-400 mb-1">
+                          <div className="text-right">
+                            <div className="text-lg font-bold text-red-400">
                               {driver.viajes}
                             </div>
-                            <div className="text-sm text-slate-400 mb-2">viajes completados</div>
-
-                            {/* Barra de progreso relativa al máximo - Colores de alerta */}
-                            <div className="w-full bg-slate-700 rounded-full h-2">
-                              <div
-                                className={`h-2 rounded-full transition-all duration-500 ${driver.viajes === 0 ? 'bg-gradient-to-r from-red-600 to-red-500' :
-                                  driver.viajes <= 2 ? 'bg-gradient-to-r from-red-500 to-orange-500' :
-                                    driver.viajes <= 5 ? 'bg-gradient-to-r from-orange-500 to-yellow-500' :
-                                      'bg-gradient-to-r from-yellow-500 to-yellow-400'
-                                  }`}
-                                style={{
-                                  width: `${Math.max(5, (driver.viajes / Math.max(1, finalProcessedData.drivers.length > 0 ? finalProcessedData.drivers.sort((a, b) => b.viajes - a.viajes)[0].viajes : 1)) * 100)}%`
-                                }}
-                              ></div>
-                            </div>
+                            <div className="text-xs text-slate-400">viajes</div>
                           </div>
                         </div>
                       ))}
                   </div>
 
-                  {/* Estadísticas del Bottom 5 */}
-                  <div className="mt-6 pt-4 border-t border-slate-700 grid grid-cols-3 gap-4 text-center">
+                  {/* Estadísticas compactas */}
+                  <div className="mt-4 pt-3 border-t border-slate-700 grid grid-cols-3 gap-2 text-center">
                     <div>
-                      <div className="text-lg font-semibold text-red-400">
-                        {Math.round(finalProcessedData.drivers.sort((a, b) => a.viajes - b.viajes).slice(0, 5).reduce((sum, d) => sum + d.viajes, 0) / 5)}
+                      <div className="text-sm font-semibold text-red-400">
+                        {driverCalculations.calculateAverage(driverCalculations.getBottomDrivers(5), 'viajes')}
                       </div>
-                      <div className="text-xs text-slate-400">Promedio viajes</div>
+                      <div className="text-xs text-slate-400">Prom. viajes</div>
                     </div>
                     <div>
-                      <div className="text-lg font-semibold text-orange-400">
-                        {Math.round(finalProcessedData.drivers.sort((a, b) => a.viajes - b.viajes).slice(0, 5).reduce((sum, d) => sum + d.eficiencia, 0) / 5)}%
+                      <div className="text-sm font-semibold text-orange-400">
+                        {driverCalculations.calculateAverage(driverCalculations.getBottomDrivers(5), 'eficiencia')}%
                       </div>
-                      <div className="text-xs text-slate-400">Eficiencia promedio</div>
+                      <div className="text-xs text-slate-400">Prom. efic.</div>
                     </div>
                     <div>
-                      <div className="text-lg font-semibold text-yellow-400">
-                        {Math.round(finalProcessedData.drivers.sort((a, b) => a.viajes - b.viajes).slice(0, 5).reduce((sum, d) => sum + d.cancelacion, 0) / 5)}%
+                      <div className="text-sm font-semibold text-yellow-400">
+                        {driverCalculations.calculateAverage(driverCalculations.getBottomDrivers(5), 'cancelacion')}%
                       </div>
-                      <div className="text-xs text-slate-400">Cancelación promedio</div>
+                      <div className="text-xs text-slate-400">Prom. canc.</div>
                     </div>
                   </div>
+
+                  {/* Indicador de que es clickeable */}
+                  <div className="absolute top-2 right-2 w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
                 </Card>
 
-                {/* Bottom 5 Conductores por Eficiencia - Presentación Mejorada */}
-                <Card className="p-6 relative">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-slate-200">Bottom 5 Conductores por Eficiencia</h3>
-                    <div className="group relative">
-                      <div className="w-5 h-5 rounded-full bg-slate-600 flex items-center justify-center cursor-help">
-                        <span className="text-xs text-slate-300">i</span>
+                {/* Bottom 5 Conductores por Eficiencia - Compacto */}
+                <Card
+                  className="p-4 relative cursor-pointer hover:border-orange-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-orange-500/10"
+                  onClick={() => finalProcessedData && setBottomEfficiencyOverlayOpen(true)}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-base font-semibold text-slate-200">Bottom 5 por Eficiencia</h3>
+                    <div className="flex items-center gap-2">
+                      <div className="group relative">
+                        <div className="w-4 h-4 rounded-full bg-slate-600 flex items-center justify-center cursor-help">
+                          <span className="text-xs text-slate-300">i</span>
+                        </div>
+                        <div className="absolute right-0 top-6 w-64 bg-slate-700 text-slate-200 text-xs rounded-lg p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 shadow-xl">
+                          <p className="font-medium mb-1">Click para lista completa</p>
+                          <p className="text-slate-300">Ver todos los conductores con baja eficiencia</p>
+                        </div>
                       </div>
-                      <div className="absolute right-0 top-8 w-80 bg-slate-700 text-slate-200 text-sm rounded-lg p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 shadow-xl">
-                        <p className="font-medium mb-2">Muestra los 5 conductores con menor eficiencia operativa.</p>
-                        <p className="text-slate-300">Basado en la relación entre viajes asignados y completados exitosamente.</p>
-                      </div>
+                      <div className="text-xs text-orange-400 font-medium">Click para expandir</div>
                     </div>
                   </div>
 
-                  {/* Lista de Bottom 5 Conductores por Eficiencia */}
-                  <div className="space-y-4 mt-2">
+                  {/* Lista compacta */}
+                  <div className="space-y-2">
                     {finalProcessedData.drivers
                       .sort((a, b) => a.eficiencia - b.eficiencia)
                       .slice(0, 5)
                       .map((driver, index) => (
                         <div
                           key={`bottom-eff-${driver.name}-${index}`}
-                          className="flex items-center justify-between p-4 bg-gradient-to-r from-orange-900/20 to-orange-800/10 rounded-lg border border-orange-700/30 hover:border-orange-500/50 transition-all duration-300"
+                          className="flex items-center justify-between p-3 bg-gradient-to-r from-orange-900/20 to-orange-800/10 rounded border border-orange-700/30 hover:border-orange-500/50 transition-all duration-300"
                         >
-                          <div className="flex items-center gap-4">
-                            {/* Ranking Badge */}
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${index === 0 ? 'bg-red-600 text-red-100' :
+                          <div className="flex items-center gap-3">
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs ${index === 0 ? 'bg-red-600 text-red-100' :
                               index === 1 ? 'bg-red-500 text-red-100' :
                                 index === 2 ? 'bg-orange-600 text-orange-100' :
                                   index === 3 ? 'bg-orange-500 text-orange-100' :
@@ -781,58 +779,48 @@ export default function OperacionalPage() {
                               }`}>
                               {index + 1}
                             </div>
-
-                            {/* Conductor Info */}
                             <div>
-                              <div className="font-semibold text-slate-200 text-lg">{driver.name}</div>
-                              <div className="text-sm text-slate-400">
-                                {driver.viajes} viajes • {driver.asignaciones} asignaciones
+                              <div className="font-medium text-slate-200 text-sm">{driver.name}</div>
+                              <div className="text-xs text-slate-400">
+                                {driver.viajes} viajes • {driver.asignaciones} asig.
                               </div>
                             </div>
                           </div>
 
-                          {/* Eficiencia y Barra */}
-                          <div className="text-right min-w-0 flex-1 ml-4">
-                            <div className="text-2xl font-bold text-orange-400 mb-1">
+                          <div className="text-right">
+                            <div className="text-lg font-bold text-orange-400">
                               {driver.eficiencia.toFixed(1)}%
                             </div>
-                            <div className="text-sm text-slate-400 mb-2">eficiencia</div>
-                            <div className="w-full bg-slate-700 rounded-full h-2">
-                              <div
-                                className={`h-2 rounded-full transition-all duration-500 ${driver.eficiencia < 20 ? 'bg-gradient-to-r from-red-600 to-red-500' :
-                                  driver.eficiencia < 40 ? 'bg-gradient-to-r from-red-500 to-orange-500' :
-                                    driver.eficiencia < 60 ? 'bg-gradient-to-r from-orange-500 to-yellow-500' :
-                                      'bg-gradient-to-r from-yellow-500 to-yellow-400'
-                                  }`}
-                                style={{ width: `${Math.max(5, driver.eficiencia)}%` }}
-                              ></div>
-                            </div>
+                            <div className="text-xs text-slate-400">eficiencia</div>
                           </div>
                         </div>
                       ))}
                   </div>
 
-                  {/* Estadísticas */}
-                  <div className="mt-6 pt-4 border-t border-slate-700 grid grid-cols-3 gap-4 text-center">
+                  {/* Estadísticas compactas */}
+                  <div className="mt-4 pt-3 border-t border-slate-700 grid grid-cols-3 gap-2 text-center">
                     <div>
-                      <div className="text-lg font-semibold text-orange-400">
-                        {Math.round(finalProcessedData.drivers.sort((a, b) => a.eficiencia - b.eficiencia).slice(0, 5).reduce((sum, d) => sum + d.eficiencia, 0) / 5)}%
+                      <div className="text-sm font-semibold text-orange-400">
+                        {driverCalculations.calculateAverage(driverCalculations.getBottomDrivers(5, 'eficiencia'), 'eficiencia')}%
                       </div>
-                      <div className="text-xs text-slate-400">Eficiencia promedio</div>
+                      <div className="text-xs text-slate-400">Prom. efic.</div>
                     </div>
                     <div>
-                      <div className="text-lg font-semibold text-red-400">
-                        {Math.round(finalProcessedData.drivers.sort((a, b) => a.eficiencia - b.eficiencia).slice(0, 5).reduce((sum, d) => sum + d.viajes, 0) / 5)}
+                      <div className="text-sm font-semibold text-red-400">
+                        {driverCalculations.calculateAverage(driverCalculations.getBottomDrivers(5, 'eficiencia'), 'viajes')}
                       </div>
-                      <div className="text-xs text-slate-400">Viajes promedio</div>
+                      <div className="text-xs text-slate-400">Prom. viajes</div>
                     </div>
                     <div>
-                      <div className="text-lg font-semibold text-yellow-400">
+                      <div className="text-sm font-semibold text-yellow-400">
                         {finalProcessedData.drivers.length > 0 ? finalProcessedData.drivers.sort((a, b) => a.eficiencia - b.eficiencia)[0].eficiencia.toFixed(1) : 0}%
                       </div>
-                      <div className="text-xs text-slate-400">Menor eficiencia</div>
+                      <div className="text-xs text-slate-400">Menor efic.</div>
                     </div>
                   </div>
+
+                  {/* Indicador de que es clickeable */}
+                  <div className="absolute top-2 right-2 w-2 h-2 bg-orange-400 rounded-full animate-pulse"></div>
                 </Card>
 
               </div>
@@ -858,7 +846,6 @@ export default function OperacionalPage() {
           isOpen={distributionOverlayOpen}
           onClose={() => setDistributionOverlayOpen(false)}
           title="Análisis Detallado de Distribución de Viajes"
-          subtitle="Análisis completo de viajes exitosos vs fallidos con métricas avanzadas"
         >
           <div className="space-y-8">
             {/* Estadísticas Principales del Overlay */}
@@ -1040,7 +1027,6 @@ export default function OperacionalPage() {
           isOpen={driversActivityOverlayOpen}
           onClose={() => setDriversActivityOverlayOpen(false)}
           title="Análisis Detallado de Actividad de Conductores"
-          subtitle="Distribución completa de conductores activos vs inactivos con métricas avanzadas"
         >
           <div className="space-y-8">
             {/* Estadísticas Principales */}
@@ -1261,21 +1247,21 @@ export default function OperacionalPage() {
               </div>
               <div className="text-center p-6 bg-gradient-to-br from-green-500/10 to-green-600/10 rounded-xl border border-green-500/20">
                 <div className="text-3xl font-bold text-green-400 mb-2">
-                  {Math.round(finalProcessedData.drivers.sort((a, b) => b.viajes - a.viajes).slice(0, 10).reduce((sum, d) => sum + d.eficiencia, 0) / 10)}%
+                  {driverCalculations.calculateAverage(driverCalculations.getTopDrivers(10), 'eficiencia')}%
                 </div>
                 <div className="text-lg text-slate-300 font-medium">Eficiencia Promedio</div>
                 <div className="text-sm text-slate-400 mt-1">Top 10</div>
               </div>
               <div className="text-center p-6 bg-gradient-to-br from-blue-500/10 to-blue-600/10 rounded-xl border border-blue-500/20">
                 <div className="text-3xl font-bold text-blue-400 mb-2">
-                  {Math.round(finalProcessedData.drivers.sort((a, b) => b.viajes - a.viajes).slice(0, 10).reduce((sum, d) => sum + d.viajes, 0) / 10)}
+                  {driverCalculations.calculateAverage(driverCalculations.getTopDrivers(10), 'viajes')}
                 </div>
                 <div className="text-lg text-slate-300 font-medium">Viajes Promedio</div>
                 <div className="text-sm text-slate-400 mt-1">Top 10</div>
               </div>
               <div className="text-center p-6 bg-gradient-to-br from-purple-500/10 to-purple-600/10 rounded-xl border border-purple-500/20">
                 <div className="text-3xl font-bold text-purple-400 mb-2">
-                  {Math.round(finalProcessedData.drivers.sort((a, b) => b.viajes - a.viajes).slice(0, 10).reduce((sum, d) => sum + d.diasActivos, 0) / 10)}
+                  {driverCalculations.calculateAverage(driverCalculations.getTopDrivers(10), 'diasActivos')}
                 </div>
                 <div className="text-lg text-slate-300 font-medium">Días Activos</div>
                 <div className="text-sm text-slate-400 mt-1">Promedio Top 10</div>
@@ -1425,6 +1411,325 @@ export default function OperacionalPage() {
                         (finalProcessedData.trends[0]?.solicitudes || 0) ? '↗️ Creciente' : '↘️ Decreciente'}
                     </span>
                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ChartOverlay>
+      )}
+
+      {/* Overlay para Tabla de Tasa de Cancelación */}
+      {finalProcessedData && (
+        <ChartOverlay
+          isOpen={cancelationTableOverlayOpen}
+          onClose={() => setCancelationTableOverlayOpen(false)}
+          title="Tabla Completa de Tasa de Cancelación"
+        >
+          <div className="space-y-6">
+            {/* Estadísticas Principales */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="text-center p-6 bg-gradient-to-br from-red-500/10 to-red-600/10 rounded-xl border border-red-500/20">
+                <div className="text-4xl font-bold text-red-400 mb-2">
+                  {finalProcessedData.drivers.filter(d => d.cancelacion >= 50).length}
+                </div>
+                <div className="text-lg text-slate-300 font-medium">Alto Riesgo</div>
+                <div className="text-sm text-slate-400 mt-1">≥50% cancelación</div>
+              </div>
+              <div className="text-center p-6 bg-gradient-to-br from-yellow-500/10 to-yellow-600/10 rounded-xl border border-yellow-500/20">
+                <div className="text-4xl font-bold text-yellow-400 mb-2">
+                  {finalProcessedData.drivers.filter(d => d.cancelacion >= 25 && d.cancelacion < 50).length}
+                </div>
+                <div className="text-lg text-slate-300 font-medium">Riesgo Medio</div>
+                <div className="text-sm text-slate-400 mt-1">25-49% cancelación</div>
+              </div>
+              <div className="text-center p-6 bg-gradient-to-br from-green-500/10 to-green-600/10 rounded-xl border border-green-500/20">
+                <div className="text-4xl font-bold text-green-400 mb-2">
+                  {finalProcessedData.drivers.filter(d => d.cancelacion < 25).length}
+                </div>
+                <div className="text-lg text-slate-300 font-medium">Bajo Riesgo</div>
+                <div className="text-sm text-slate-400 mt-1">&lt;25% cancelación</div>
+              </div>
+            </div>
+
+            {/* Tabla Completa con Scroll */}
+            <div className="bg-slate-800/50 rounded-xl p-6">
+              <h3 className="text-xl font-semibold text-slate-200 mb-6">Todos los Conductores - Ordenados por Tasa de Cancelación</h3>
+
+              {/* Encabezados */}
+              <div className="grid grid-cols-4 gap-4 pb-3 mb-4 border-b border-slate-700 text-sm font-medium text-slate-400">
+                <div>CONDUCTOR</div>
+                <div className="text-center">VIAJES ASIGNADOS</div>
+                <div className="text-center">VIAJES COMPLETADOS</div>
+                <div className="text-center">TASA CANCELACIÓN</div>
+              </div>
+
+              {/* Contenido scrolleable */}
+              <div className="max-h-96 overflow-y-auto scrollbar-thin scrollbar-track-slate-800 scrollbar-thumb-slate-600 hover:scrollbar-thumb-slate-500">
+                <div className="space-y-2">
+                  {finalProcessedData.drivers
+                    .sort((a, b) => b.cancelacion - a.cancelacion)
+                    .map((driver, index) => (
+                      <div
+                        key={`full-${driver.name}-${index}`}
+                        className="grid grid-cols-4 gap-4 p-3 bg-slate-800/30 rounded-lg hover:bg-slate-800/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-slate-700 rounded-full flex items-center justify-center flex-shrink-0">
+                            <User className="w-4 h-4 text-slate-400" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="font-medium text-slate-200 text-sm">{driver.name}</div>
+                            <div className="text-xs text-slate-400">{driver.eficiencia.toFixed(1)}% eficiencia</div>
+                          </div>
+                        </div>
+
+                        <div className="text-center text-slate-300 self-center">
+                          {driver.asignaciones}
+                        </div>
+
+                        <div className="text-center text-slate-300 self-center">
+                          {driver.viajes}
+                        </div>
+
+                        <div className="text-center self-center">
+                          <span className={`px-3 py-1 rounded-full text-sm font-medium ${driver.cancelacion >= 50 ? 'bg-red-500/20 text-red-400' :
+                              driver.cancelacion >= 25 ? 'bg-yellow-500/20 text-yellow-400' :
+                                driver.cancelacion >= 15 ? 'bg-orange-500/20 text-orange-400' :
+                                  'bg-green-500/20 text-green-400'
+                            }`}>
+                            {driver.cancelacion}%
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+
+              {/* Footer con estadísticas */}
+              <div className="mt-6 pt-4 border-t border-slate-700 grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <div>
+                  <div className="text-lg font-bold text-slate-300">{finalProcessedData.drivers.length}</div>
+                  <div className="text-xs text-slate-400">Total Conductores</div>
+                </div>
+                <div>
+                  <div className="text-lg font-bold text-red-400">
+                    {Math.round(finalProcessedData.drivers.reduce((sum, d) => sum + d.cancelacion, 0) / finalProcessedData.drivers.length)}%
+                  </div>
+                  <div className="text-xs text-slate-400">Promedio Cancelación</div>
+                </div>
+                <div>
+                  <div className="text-lg font-bold text-yellow-400">
+                    {Math.max(...finalProcessedData.drivers.map(d => d.cancelacion))}%
+                  </div>
+                  <div className="text-xs text-slate-400">Máxima Cancelación</div>
+                </div>
+                <div>
+                  <div className="text-lg font-bold text-green-400">
+                    {Math.min(...finalProcessedData.drivers.map(d => d.cancelacion))}%
+                  </div>
+                  <div className="text-xs text-slate-400">Mínima Cancelación</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ChartOverlay>
+      )}
+
+      {/* Overlay para Bottom Conductores por Viajes */}
+      {finalProcessedData && (
+        <ChartOverlay
+          isOpen={bottomDriversOverlayOpen}
+          onClose={() => setBottomDriversOverlayOpen(false)}
+          title="Conductores con Menor Rendimiento en Viajes"
+        >
+          <div className="space-y-6">
+            {/* Estadísticas Principales */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="text-center p-6 bg-gradient-to-br from-red-500/10 to-red-600/10 rounded-xl border border-red-500/20">
+                <div className="text-4xl font-bold text-red-400 mb-2">
+                  {finalProcessedData.drivers.filter(d => d.viajes === 0).length}
+                </div>
+                <div className="text-lg text-slate-300 font-medium">Sin Viajes</div>
+                <div className="text-sm text-slate-400 mt-1">0 viajes completados</div>
+              </div>
+              <div className="text-center p-6 bg-gradient-to-br from-orange-500/10 to-orange-600/10 rounded-xl border border-orange-500/20">
+                <div className="text-4xl font-bold text-orange-400 mb-2">
+                  {finalProcessedData.drivers.filter(d => d.viajes > 0 && d.viajes <= 5).length}
+                </div>
+                <div className="text-lg text-slate-300 font-medium">Muy Bajo</div>
+                <div className="text-sm text-slate-400 mt-1">1-5 viajes</div>
+              </div>
+              <div className="text-center p-6 bg-gradient-to-br from-yellow-500/10 to-yellow-600/10 rounded-xl border border-yellow-500/20">
+                <div className="text-4xl font-bold text-yellow-400 mb-2">
+                  {Math.round(finalProcessedData.drivers.reduce((sum, d) => sum + d.viajes, 0) / finalProcessedData.drivers.length)}
+                </div>
+                <div className="text-lg text-slate-300 font-medium">Promedio</div>
+                <div className="text-sm text-slate-400 mt-1">Viajes por conductor</div>
+              </div>
+            </div>
+
+            {/* Lista Completa con Scroll */}
+            <div className="bg-slate-800/50 rounded-xl p-6">
+              <h3 className="text-xl font-semibold text-slate-200 mb-6">Todos los Conductores - Ordenados por Menor Rendimiento</h3>
+
+              {/* Encabezados */}
+              <div className="grid grid-cols-5 gap-4 pb-3 mb-4 border-b border-slate-700 text-sm font-medium text-slate-400">
+                <div>CONDUCTOR</div>
+                <div className="text-center">VIAJES</div>
+                <div className="text-center">ASIGNACIONES</div>
+                <div className="text-center">EFICIENCIA</div>
+                <div className="text-center">CANCELACIÓN</div>
+              </div>
+
+              {/* Contenido scrolleable */}
+              <div className="max-h-96 overflow-y-auto scrollbar-thin scrollbar-track-slate-800 scrollbar-thumb-slate-600 hover:scrollbar-thumb-slate-500">
+                <div className="space-y-2">
+                  {finalProcessedData.drivers
+                    .sort((a, b) => a.viajes - b.viajes)
+                    .map((driver, index) => (
+                      <div
+                        key={`bottom-full-${driver.name}-${index}`}
+                        className="grid grid-cols-5 gap-4 p-3 bg-slate-800/30 rounded-lg hover:bg-slate-800/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${index < 5 ? 'bg-red-600 text-red-100' :
+                              index < 10 ? 'bg-orange-600 text-orange-100' :
+                                'bg-slate-700 text-slate-300'
+                            }`}>
+                            {index + 1}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="font-medium text-slate-200 text-sm">{driver.name}</div>
+                            <div className="text-xs text-slate-400">{driver.diasActivos} días activos</div>
+                          </div>
+                        </div>
+
+                        <div className="text-center self-center">
+                          <div className="text-lg font-bold text-red-400">{driver.viajes}</div>
+                        </div>
+
+                        <div className="text-center text-slate-300 self-center">
+                          {driver.asignaciones}
+                        </div>
+
+                        <div className="text-center self-center">
+                          <span className={`px-2 py-1 rounded text-sm font-medium ${driver.eficiencia < 20 ? 'bg-red-500/20 text-red-400' :
+                              driver.eficiencia < 40 ? 'bg-orange-500/20 text-orange-400' :
+                                driver.eficiencia < 60 ? 'bg-yellow-500/20 text-yellow-400' :
+                                  'bg-green-500/20 text-green-400'
+                            }`}>
+                            {driver.eficiencia.toFixed(1)}%
+                          </span>
+                        </div>
+
+                        <div className="text-center self-center">
+                          <span className={`px-2 py-1 rounded text-sm font-medium ${driver.cancelacion >= 50 ? 'bg-red-500/20 text-red-400' :
+                              driver.cancelacion >= 25 ? 'bg-yellow-500/20 text-yellow-400' :
+                                'bg-green-500/20 text-green-400'
+                            }`}>
+                            {driver.cancelacion}%
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </ChartOverlay>
+      )}
+
+      {/* Overlay para Bottom Conductores por Eficiencia */}
+      {finalProcessedData && (
+        <ChartOverlay
+          isOpen={bottomEfficiencyOverlayOpen}
+          onClose={() => setBottomEfficiencyOverlayOpen(false)}
+          title="Conductores con Menor Eficiencia Operativa"
+        >
+          <div className="space-y-6">
+            {/* Estadísticas Principales */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="text-center p-6 bg-gradient-to-br from-red-500/10 to-red-600/10 rounded-xl border border-red-500/20">
+                <div className="text-4xl font-bold text-red-400 mb-2">
+                  {finalProcessedData.drivers.filter(d => d.eficiencia < 20).length}
+                </div>
+                <div className="text-lg text-slate-300 font-medium">Crítica</div>
+                <div className="text-sm text-slate-400 mt-1">&lt;20% eficiencia</div>
+              </div>
+              <div className="text-center p-6 bg-gradient-to-br from-orange-500/10 to-orange-600/10 rounded-xl border border-orange-500/20">
+                <div className="text-4xl font-bold text-orange-400 mb-2">
+                  {finalProcessedData.drivers.filter(d => d.eficiencia >= 20 && d.eficiencia < 50).length}
+                </div>
+                <div className="text-lg text-slate-300 font-medium">Baja</div>
+                <div className="text-sm text-slate-400 mt-1">20-49% eficiencia</div>
+              </div>
+              <div className="text-center p-6 bg-gradient-to-br from-yellow-500/10 to-yellow-600/10 rounded-xl border border-yellow-500/20">
+                <div className="text-4xl font-bold text-yellow-400 mb-2">
+                  {Math.round(finalProcessedData.drivers.reduce((sum, d) => sum + d.eficiencia, 0) / finalProcessedData.drivers.length)}%
+                </div>
+                <div className="text-lg text-slate-300 font-medium">Promedio</div>
+                <div className="text-sm text-slate-400 mt-1">Eficiencia general</div>
+              </div>
+            </div>
+
+            {/* Lista Completa con Scroll */}
+            <div className="bg-slate-800/50 rounded-xl p-6">
+              <h3 className="text-xl font-semibold text-slate-200 mb-6">Todos los Conductores - Ordenados por Menor Eficiencia</h3>
+
+              {/* Encabezados */}
+              <div className="grid grid-cols-5 gap-4 pb-3 mb-4 border-b border-slate-700 text-sm font-medium text-slate-400">
+                <div>CONDUCTOR</div>
+                <div className="text-center">EFICIENCIA</div>
+                <div className="text-center">VIAJES</div>
+                <div className="text-center">ASIGNACIONES</div>
+                <div className="text-center">CANCELACIÓN</div>
+              </div>
+
+              {/* Contenido scrolleable */}
+              <div className="max-h-96 overflow-y-auto scrollbar-thin scrollbar-track-slate-800 scrollbar-thumb-slate-600 hover:scrollbar-thumb-slate-500">
+                <div className="space-y-2">
+                  {finalProcessedData.drivers
+                    .sort((a, b) => a.eficiencia - b.eficiencia)
+                    .map((driver, index) => (
+                      <div
+                        key={`eff-full-${driver.name}-${index}`}
+                        className="grid grid-cols-5 gap-4 p-3 bg-slate-800/30 rounded-lg hover:bg-slate-800/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${index < 5 ? 'bg-red-600 text-red-100' :
+                              index < 10 ? 'bg-orange-600 text-orange-100' :
+                                'bg-slate-700 text-slate-300'
+                            }`}>
+                            {index + 1}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="font-medium text-slate-200 text-sm">{driver.name}</div>
+                            <div className="text-xs text-slate-400">{driver.diasActivos} días activos</div>
+                          </div>
+                        </div>
+
+                        <div className="text-center self-center">
+                          <div className="text-lg font-bold text-orange-400">{driver.eficiencia.toFixed(1)}%</div>
+                        </div>
+
+                        <div className="text-center text-slate-300 self-center">
+                          {driver.viajes}
+                        </div>
+
+                        <div className="text-center text-slate-300 self-center">
+                          {driver.asignaciones}
+                        </div>
+
+                        <div className="text-center self-center">
+                          <span className={`px-2 py-1 rounded text-sm font-medium ${driver.cancelacion >= 50 ? 'bg-red-500/20 text-red-400' :
+                              driver.cancelacion >= 25 ? 'bg-yellow-500/20 text-yellow-400' :
+                                'bg-green-500/20 text-green-400'
+                            }`}>
+                            {driver.cancelacion}%
+                          </span>
+                        </div>
+                      </div>
+                    ))}
                 </div>
               </div>
             </div>

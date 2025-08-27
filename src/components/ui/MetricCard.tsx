@@ -14,7 +14,7 @@ interface MetricCardProps {
   metadata?: { total?: number };
 }
 
-export default function MetricCard({
+const MetricCard = React.memo<MetricCardProps>(({
   title,
   subtitle,
   value,
@@ -23,7 +23,7 @@ export default function MetricCard({
   className = "",
   onClick,
   metadata
-}: MetricCardProps) {
+}) => {
   const formatValue = (val: number, fmt: string) => {
     switch (fmt) {
       case 'currency':
@@ -92,4 +92,8 @@ export default function MetricCard({
       </div>
     </div>
   );
-}
+});
+
+MetricCard.displayName = 'MetricCard';
+
+export default MetricCard;
