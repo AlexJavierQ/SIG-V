@@ -175,7 +175,7 @@ export default function ExecutiveTaxisPage() {
                             <div className="mb-6">
                                 <h3 className="text-2xl font-bold text-white mb-3">Dashboard Operacional</h3>
                                 <p className="text-slate-300 leading-relaxed">
-                                    Monitoreo en tiempo real de operaciones, eficiencia de conductores,
+                                    Monitoreo de operaciones, eficiencia de conductores,
                                     métricas de servicio y análisis de rendimiento operativo.
                                 </p>
                             </div>

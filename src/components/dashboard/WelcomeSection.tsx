@@ -13,10 +13,10 @@ export default function WelcomeSection({ serviciosActivos = 2, isLoading = false
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-                        Bienvenido al Sistema de Analytics
+                        Bienvenido al Sistema de Análisis
                     </h2>
                     <p className="text-slate-700 dark:text-slate-300 text-lg">
-                        Monitorea el rendimiento de tu negocio con datos en tiempo real.
+                        Datos precisos para decisiones estratégicas.
                     </p>
                     <div className="flex items-center gap-6 mt-4">
                         <div className="flex items-center gap-2">

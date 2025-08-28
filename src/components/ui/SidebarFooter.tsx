@@ -35,7 +35,7 @@ export default function SidebarFooter({ isCollapsed }: SidebarFooterProps) {
             {!isCollapsed && (
                 <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-700">
                     <div className="text-center">
-                        <div className="text-xs text-slate-600 dark:text-slate-300 font-medium">SIG-V Analytics v2.1.0</div>
+                        <div className="text-xs text-slate-600 dark:text-slate-300 font-medium">CLIPP Analytics v2.1.0</div>
                         <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">© 2025 Clipp Dashboard</div>
                     </div>
                 </div>

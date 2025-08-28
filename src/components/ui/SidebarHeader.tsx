@@ -18,8 +18,8 @@ export default function SidebarHeader({ isCollapsed, toggleCollapse }: SidebarHe
                 </div>
                 {!isCollapsed && (
                     <div className="transition-opacity duration-300 opacity-100">
-                        <div className="text-slate-900 dark:text-slate-100 font-bold text-lg">SIG-V</div>
-                        <div className="text-blue-600 dark:text-slate-300 text-xs font-medium">Analytics Platform</div>
+                        <div className="text-slate-900 dark:text-slate-100 font-bold text-lg">CLIPP</div>
+                        <div className="text-blue-600 dark:text-slate-300 text-xs font-medium">Plataforma de Análisis</div>
                     </div>
                 )}
             </Link>

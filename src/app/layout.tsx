@@ -40,14 +40,10 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <head>
-        <title>Clipp Dashboard | SIG-V Analytics</title>
+        <title>Clipp Dashboard | CLIPP Analytics</title>
         <meta name="description" content="Dashboard de métricas y análisis estratégico para Clipp" />
         <meta name="theme-color" content="#ffffff" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        {/* MEJORA: Precarga de la fuente para mejorar el rendimiento.
-          Asegúrate de que la fuente 'Inter' esté disponible en tu proyecto, por ejemplo, desde `next/font`.
-          Si usas next/font, esto se maneja automáticamente y puedes omitir las siguientes líneas.
-        */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
@@ -55,11 +51,6 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      {/*
-        REMOVIDO: Las clases de fondo se eliminan del body.
-        Ahora `globals.css` tiene el control total sobre el fondo, permitiendo el efecto aurora.
-        'suppressHydrationWarning' es útil cuando se usa `next-themes` o un ThemeProvider similar.
-      */}
       <body>
         <ThemeProvider>
           <FiltersProvider>
